@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import { SbcProvider, WalletButton, useSbcApp, useUserOperation } from '@stablecoin.xyz/react';
 import { {{chain}} } from 'viem/chains';
 import { createPublicClient, http, getAddress, parseSignature, WalletClient, PublicClient } from 'viem';
@@ -50,17 +50,18 @@ function WalletStatus({ onDisconnect }: { onDisconnect: () => void }) {
   if (!ownerAddress) return null;
 
   return (
-    <div className="wallet-status">
+    <div className="card">
       <div className="status-header">
         <h3>✅ Wallet Connected</h3>
-        <button onClick={onDisconnect} className="disconnect-btn">
-          Disconnect
-        </button>
+        <button onClick={onDisconnect}>Disconnect</button>
       </div>
-      <div className="wallet-info">
-        <p><strong>EOA Address:</strong></p>
-        <p className="address">{ownerAddress}</p>
-        <p className="connection-info">Connected via wallet extension</p>
+      <div className="info-row">
+        <label>EOA Address:</label>
+        <div className="address-display">{ownerAddress}</div>
+      </div>
+      <div className="info-row">
+        <label>Connection:</label>
+        <div className="value">Connected via wallet extension</div>
       </div>
     </div>
   );
@@ -148,37 +149,36 @@ function SmartAccountInfo() {
   }
 
   return (
-    <div className="account-info">
-      <div className="account-header">
+    <div className="card">
+      <div className="status-header">
         <h3>🔐 Smart Account</h3>
         <button
           onClick={handleRefresh}
           disabled={isRefreshing || isLoadingAccount}
-          className="refresh-btn"
         >
           {isRefreshing || isLoadingAccount ? 'Refreshing...' : 'Refresh'}
         </button>
       </div>
-      <div className="account-details">
-        <div className="detail-row">
-          <span>Address:</span>
-          <span className="address">{account.address}</span>
-        </div>
-        <div className="detail-row">
-          <span>Deployed:</span>
-          <span>{account.isDeployed ? '✅ Yes' : '⏳ On first transaction'}</span>
-        </div>
-        <div className="detail-row">
-          <span>Nonce:</span>
-          <span>{account.nonce}</span>
-        </div>
-        <div className="detail-row">
-          <span>ETH Balance:</span>
-          <span>{formatEthBalance(account.balance)} ETH</span>
-        </div>
-        <div className="detail-row">
-          <span>SBC Balance:</span>
-          <span>{isLoadingBalance ? 'Loading...' : `${formatSbcBalance(sbcBalance)} SBC`}</span>
+      <div className="info-row">
+        <label>Address:</label>
+        <div className="address-display">{account.address}</div>
+      </div>
+      <div className="info-row">
+        <label>Deployed:</label>
+        <div className="value">{account.isDeployed ? '✅ Yes' : '⏳ On first transaction'}</div>
+      </div>
+      <div className="info-row">
+        <label>Nonce:</label>
+        <div className="value">{account.nonce}</div>
+      </div>
+      <div className="info-row">
+        <label>ETH Balance:</label>
+        <div className="value">{formatEthBalance(account.balance)} ETH</div>
+      </div>
+      <div className="info-row">
+        <label>SBC Balance:</label>
+        <div className="value">
+          {isLoadingBalance ? 'Loading...' : `${formatSbcBalance(sbcBalance)} SBC`}
         </div>
       </div>
     </div>
@@ -243,66 +243,64 @@ function SendSBCForm() {
   if (!account) return null;
 
   return (
-    <div className="send-form">
+    <div className="card">
       <h3>💸 Send 1 SBC Token</h3>
-      <div className="form-content">
-        <div className="form-group">
-          <label>Recipient Address</label>
-          <input
-            type="text"
-            value={recipient}
-            onChange={(e) => setRecipient(e.target.value)}
-            placeholder="0x..."
-            className={recipient && !isFormValid ? 'error' : ''}
-          />
-          {recipient && !/^0x[a-fA-F0-9]{40}$/.test(recipient) && (
-            <span className="error-text">Invalid Ethereum address</span>
-          )}
-        </div>
-        
-        <div className="transaction-info">
-          <div className="info-row">
-            <span>Amount:</span>
-            <span>1.00 SBC</span>
-          </div>
-          <div className="info-row">
-            <span>Gas fees:</span>
-            <span>Covered by SBC Paymaster ✨</span>
-          </div>
-          <div className="info-row">
-            <span>Signing:</span>
-            <span>Your wallet will prompt to sign 🖊️</span>
-          </div>
-        </div>
-
-        <button
-          onClick={handleSendSBC}
-          disabled={!isFormValid || isLoading || !account}
-          className="send-btn"
-        >
-          {isLoading ? 'Waiting for signature...' : 'Send 1 SBC'}
-        </button>
-
-        {isSuccess && data && (
-          <div className="success-message">
-            <p>✅ Transaction Successful!</p>
-            <a 
-              href={`https://sepolia.basescan.org/tx/${data.transactionHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              View on BaseScan: {data.transactionHash}
-            </a>
-          </div>
-        )}
-        
-        {isError && opError && (
-          <div className="error-message">
-            <p>❌ Transaction Failed</p>
-            <p>{opError.message}</p>
-          </div>
+      <div className="form-group">
+        <label>Recipient Address</label>
+        <input
+          type="text"
+          value={recipient}
+          onChange={(e) => setRecipient(e.target.value)}
+          placeholder="0x..."
+          className={recipient && !isFormValid ? 'error' : ''}
+        />
+        {recipient && !isFormValid && (
+          <span className="error-text">Invalid Ethereum address</span>
         )}
       </div>
+      
+      <div className="status-section">
+        <div className="info-row">
+          <label>Amount:</label>
+          <div className="value">1.00 SBC</div>
+        </div>
+        <div className="info-row">
+          <label>Gas fees:</label>
+          <div className="value">Covered by SBC Paymaster ✨</div>
+        </div>
+        <div className="info-row">
+          <label>Signing:</label>
+          <div className="value">Your wallet will prompt to sign 🖊️</div>
+        </div>
+      </div>
+
+      <button
+        onClick={handleSendSBC}
+        disabled={!isFormValid || isLoading || !account}
+        className="primary"
+      >
+        {isLoading ? 'Waiting for signature...' : 'Send 1 SBC'}
+      </button>
+
+      {isSuccess && data && (
+        <div className="success-message">
+          <p>✅ Transaction Successful!</p>
+          <a 
+            href={`https://sepolia.basescan.org/tx/${data.transactionHash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View on BaseScan: {data.transactionHash}
+          </a>
+        </div>
+      )}
+      
+      {isError && opError && (
+        <div className="error-message">
+          <p>❌ Transaction Failed</p>
+          <p>{opError.message}</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -352,6 +350,22 @@ function WalletConnectFlow() {
   );
 }
 
+// Add theme context
+const ThemeContext = createContext({ isDark: false, toggle: () => {} });
+
+function ThemeToggle() {
+  const { isDark, toggle } = useContext(ThemeContext);
+  return (
+    <button 
+      onClick={toggle}
+      className="theme-toggle"
+      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      {isDark ? '🌞' : '🌙'}
+    </button>
+  );
+}
+
 export default function App() {
   const sbcConfig = {
     apiKey: import.meta.env.VITE_SBC_API_KEY || '{{apiKey}}',
@@ -361,30 +375,49 @@ export default function App() {
     walletOptions: { autoConnect: false },
   };
 
+  // Add theme state
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const saved = localStorage.getItem('theme');
+    return saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
+
+  const themeValue = {
+    isDark,
+    toggle: () => setIsDark(prev => !prev)
+  };
+
   return (
-    <SbcProvider config={sbcConfig}>
-      <div className="app">
-        <div className="container">
-          <header className="app-header">
-            <h1>{{projectName}}</h1>
-            <p>SBC Account Abstraction Demo</p>
-          </header>
-          <main>
-            <WalletConnectFlow />
-          </main>
-          <footer className="app-footer">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              <span>Powered by</span>
-              {/* Make sure public/sbc-logo.png exists in the template and is copied to the generated app */}
-              <img src="/sbc-logo.png" alt="SBC Logo" style={{ width: 20, height: 20, verticalAlign: 'middle' }} />
-              <a href="https://stablecoin.xyz" target="_blank" rel="noopener noreferrer">
-                SBC App Kit
-              </a>
-            </div>
-          </footer>
+    <ThemeContext.Provider value={themeValue}>
+      <SbcProvider config={sbcConfig}>
+        <div className="app">
+          <div className="container">
+            <header className="app-header">
+              <h1>{{projectName}}</h1>
+              <p>SBC Account Abstraction Demo</p>
+            </header>
+            <main>
+              <WalletConnectFlow />
+            </main>
+            <footer className="app-footer">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <span>Powered by</span>
+                <img src="/sbc-logo.png" alt="SBC Logo" style={{ width: 20, height: 20, verticalAlign: 'middle' }} />
+                <a href="https://github.com/stablecoinxyz/app-kit" target="_blank" rel="noopener noreferrer">
+                  SBC App Kit
+                </a>
+              </div>
+            </footer>
+          </div>
+          <ThemeToggle />
         </div>
-      </div>
-    </SbcProvider>
+      </SbcProvider>
+    </ThemeContext.Provider>
   );
 }
 
