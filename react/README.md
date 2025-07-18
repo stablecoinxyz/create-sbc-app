@@ -21,7 +21,7 @@ This template is a minimal, production-ready React app (Vite) with SBC App Kit i
    ```
 
 3. **Open your browser:**
-   Visit [http://localhost:5173](http://localhost:5173) (or the port shown in your terminal).
+   Visit [http://localhost:3000](http://localhost:3000) (or the port shown in your terminal).
 
 ## What This Template Demonstrates
 

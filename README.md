@@ -1,50 +1,139 @@
 # create-sbc-app
 
-This directory contains ready-to-use templates for quickly starting new projects with the SBC App Kit. Each template is a minimal, fully functional app that demonstrates best practices for integrating @stablecoin.xyz/core and @stablecoin.xyz/react.
+The easiest way to get started with SBC Account Abstraction. Create feature-complete applications with gasless transactions in seconds.
 
-## Available Templates
+## Quick Start
 
-- **react/** – Minimal React app with SBC integration (Vite)
-- **nextjs/** – Minimal Next.js app with SBC integration (App Router)
-- **backend/** – Minimal Node.js backend example (TypeScript)
+```bash
+# Create a new SBC app
+npx create-sbc-app my-sbc-app
 
-## How to Use a Template
+# Navigate to your app
+cd my-sbc-app
 
-1. **Copy the template directory** you want to use:
+# Install dependencies
+npm install
 
-   ```bash
-   cp -r create-sbc-app/react my-new-sbc-app
-   # or for Next.js:
-   cp -r create-sbc-app/nextjs my-new-sbc-next-app
-   ```
+# Set up your environment variables
+# Copy .env.template to .env and add your API key
 
-2. **Install dependencies:**
+# Start development server
+npm run dev
+```
 
-   ```bash
-   cd my-new-sbc-app
-   pnpm install
-   # or
-   npm install
-   ```
+## ✨ Features
 
-3. **Run the app:**
+The React template includes comprehensive, production-ready examples:
 
-   ```bash
-   pnpm dev
-   # or
-   npm run dev
-   ```
+### 🔋 Core Functionality
 
-4. **Customize as needed:**
-   - Update the API key and config in `src/App.tsx` or `app/page.tsx`.
-   - Follow the template’s README for more details.
+- **Smart Account Management** - Automatic account creation and management
+- **Gasless Transactions** - Send ETH and interact with contracts without gas fees
+- **Gas Estimation** - Preview transaction costs before sending
+- **Batch Transactions** - Send multiple operations in a single transaction
+- **Real-time Balance Tracking** - Monitor account balances and transaction status
+- **Error Handling** - Comprehensive error messages and recovery suggestions
 
-## Keeping Templates Up to Date
+### 🎨 User Experience
 
-- All templates use the latest published versions of SBC packages.
-- Code and config are kept in sync with the main repo’s best practices.
-- If you find an issue, please open a PR or issue in the main repo.
+- **Modern UI Design** - Beautiful, responsive interfaces
+- **Form Validation** - Real-time address and input validation
+- **Loading States** - Clear feedback during operations
+- **Success/Error Feedback** - Visual confirmation of transaction status
+- **Block Explorer Integration** - Direct links to view transactions
+- **Copy-to-Clipboard** - Easy address and hash copying
 
----
+### 🛠️ Developer Experience
 
-Each template has its own README with specific instructions and details.
+- **TypeScript Support** - Full type safety
+- **Environment Configuration** - Secure API key and settings management
+- **Debug Logging** - Comprehensive development logging
+- **Hot Reload** - Fast development iteration
+- **Production Ready** - Optimized builds and deployment preparation
+
+## 🚀 React Template
+
+**Best for:** Client-side applications, rapid prototyping, and production use
+
+```bash
+npx create-sbc-app my-app
+```
+
+**Features:**
+
+- Fast development setup
+- Hot module replacement
+- Built-in testing framework
+- Easy deployment to static hosts
+- Modern React patterns and hooks
+
+## 📝 Configuration
+
+### Environment Variables
+
+The template includes comprehensive environment configuration:
+
+#### Required
+
+```bash
+# Your SBC API key (get from SBC dashboard)
+VITE_SBC_API_KEY=your_api_key_here
+```
+
+## 📱 UI Components
+
+The template includes:
+
+- Account information display with copy functionality
+- Transaction forms with validation
+- Gas estimation interfaces
+- Success/error feedback with block explorer links
+- Responsive design with dark mode support
+
+## 🚀 Development Workflow
+
+### 1. Create Your App
+
+```bash
+npx create-sbc-app my-sbc-app
+cd my-sbc-app
+```
+
+### 2. Set Up Environment
+
+```bash
+# Copy environment template
+cp .env.template .env
+
+# Add your API key
+echo "VITE_SBC_API_KEY=your_actual_api_key" >> .env
+```
+
+### 3. Start Development
+
+```bash
+npm install
+npm run dev
+```
+
+### 4. Test Features
+
+- Connect and view your smart account
+- Try sending test transactions
+- Experiment with gas estimation
+- Test batch transactions
+
+### 5. Customize and Build
+
+- Modify the UI to match your needs
+- Add your own smart contract interactions
+- Build for production
+
+## 📚 Documentation
+
+- **[SBC API Documentation](https://docs.stablecoin.xyz)** - Complete API reference
+- **[GitHub Repository](https://github.com/stablecoinxyz/app-kit)** - Source code and examples
+
+## 📄 License
+
+MIT - Built with ❤️ by the SBC team
