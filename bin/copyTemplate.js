@@ -12,19 +12,23 @@ export async function copyTemplate(src, dest, templateVars = { projectName: 'my-
             await copyTemplate(srcPath, destPath, templateVars);
         }
         else {
-            // Copy files, removing .template suffix and replacing content
             let destName = item;
             if (item.endsWith('.template')) {
                 destName = item.replace(/\.template$/, '');
+                const destPath = path.join(dest, destName);
+                // Only do text replacement for .template files
+                const content = await fs.readFile(srcPath, 'utf-8');
+                const processedContent = content
+                    .replace(/\{\{projectName\}\}/g, templateVars.projectName)
+                    .replace(/\{\{chain\}\}/g, templateVars.chain)
+                    .replace(/\{\{apiKey\}\}/g, templateVars.apiKey);
+                await fs.writeFile(destPath, processedContent);
             }
-            const destPath = path.join(dest, destName);
-            // Read file content and replace template variables
-            const content = await fs.readFile(srcPath, 'utf-8');
-            const processedContent = content
-                .replace(/\{\{projectName\}\}/g, templateVars.projectName)
-                .replace(/\{\{chain\}\}/g, templateVars.chain)
-                .replace(/\{\{apiKey\}\}/g, templateVars.apiKey);
-            await fs.writeFile(destPath, processedContent);
+            else {
+                // Copy all other files (including images) as binary
+                const destPath = path.join(dest, destName);
+                await fs.copy(srcPath, destPath);
+            }
         }
     }
 }

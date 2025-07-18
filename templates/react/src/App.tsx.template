@@ -1,405 +1,472 @@
-import React, { useState, useEffect } from 'react';
-import { SbcProvider, useSbcApp, useUserOperation } from '@stablecoin.xyz/react';
+import { useState, useEffect, useRef } from 'react';
+import { SbcProvider, WalletButton, useSbcApp, useUserOperation } from '@stablecoin.xyz/react';
 import { {{chain}} } from 'viem/chains';
-import { encodeFunctionData, formatEther, parseEther, isAddress } from 'viem';
+import { createPublicClient, http, getAddress, parseSignature, WalletClient, PublicClient } from 'viem';
+import { parseUnits, encodeFunctionData, erc20Abi } from 'viem';
 import './App.css';
 
-// Load environment variables
-const config = {
-  apiKey: process.env.REACT_APP_SBC_API_KEY || '{{apiKey}}',
-  chain: {{chain}},
-  debug: process.env.REACT_APP_SBC_DEBUG === 'true',
-  privateKey: process.env.REACT_APP_PRIVATE_KEY as `0x${string}` | undefined,
-  staging: process.env.REACT_APP_SBC_STAGING === 'true'
-};
+// SBC Token Configuration
+const SBC_TOKEN_ADDRESS = '0xf9FB20B8E097904f0aB7d12e9DbeE88f2dcd0F16';
+const SBC_DECIMALS = 6;
 
-// Demo constants
-const DEMO_TARGET = process.env.REACT_APP_DEMO_TARGET_ADDRESS || '0x742d35Cc6635C0532925a3b8c17f21c5F8E63231';
-const DEMO_AMOUNT = '0.01'; // ETH amount for demo
+const publicClient = createPublicClient({ chain: {{chain}}, transport: http() });
 
-interface BalanceInfo {
-  eth: string;
-  formatted: string;
+const erc20PermitAbi = [
+  ...erc20Abi,
+  {
+    "inputs": [
+      { "internalType": "address", "name": "owner", "type": "address" }
+    ],
+    "name": "nonces",
+    "outputs": [
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
+
+const permitAbi = [
+  {
+    "inputs": [
+      { "internalType": "address", "name": "owner", "type": "address" },
+      { "internalType": "address", "name": "spender", "type": "address" },
+      { "internalType": "uint256", "name": "value", "type": "uint256" },
+      { "internalType": "uint256", "name": "deadline", "type": "uint256" },
+      { "internalType": "uint8", "name": "v", "type": "uint8" },
+      { "internalType": "bytes32", "name": "r", "type": "bytes32" },
+      { "internalType": "bytes32", "name": "s", "type": "bytes32" }
+    ],
+    "name": "permit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+];
+
+function WalletStatus({ onDisconnect }: { onDisconnect: () => void }) {
+  const { ownerAddress } = useSbcApp();
+
+  if (!ownerAddress) return null;
+
+  return (
+    <div className="wallet-status">
+      <div className="status-header">
+        <h3>✅ Wallet Connected</h3>
+        <button onClick={onDisconnect} className="disconnect-btn">
+          Disconnect
+        </button>
+      </div>
+      <div className="wallet-info">
+        <p><strong>EOA Address:</strong></p>
+        <p className="address">{ownerAddress}</p>
+        <p className="connection-info">Connected via wallet extension</p>
+      </div>
+    </div>
+  );
 }
 
-function Dashboard() {
-  const { 
-    sbcAppKit, 
-    isInitialized, 
-    error, 
-    account, 
-    isLoadingAccount, 
-    accountError,
-    refreshAccount 
-  } = useSbcApp();
-
-  const { 
-    sendUserOperation, 
-    estimateUserOperation,
-    isLoading, 
-    isSuccess, 
-    isError, 
-    error: txError, 
-    data: txResult,
-    reset 
-  } = useUserOperation({
-    onSuccess: (result) => {
-      console.log('Transaction successful!', result);
-      refreshAccount();
-      fetchBalance();
-    },
-    onError: (error) => {
-      console.error('Transaction failed:', error);
-    }
-  });
-
-  // State management
-  const [targetAddress, setTargetAddress] = useState(DEMO_TARGET);
-  const [transferAmount, setTransferAmount] = useState(DEMO_AMOUNT);
-  const [addressError, setAddressError] = useState('');
-  const [balance, setBalance] = useState<BalanceInfo | null>(null);
+function SmartAccountInfo() {
+  const { account, isInitialized, refreshAccount, isLoadingAccount } = useSbcApp();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [sbcBalance, setSbcBalance] = useState<string | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
-  const [gasEstimate, setGasEstimate] = useState<any>(null);
-  const [isEstimating, setIsEstimating] = useState(false);
 
-  // Validate address input
+  // Fetch SBC balance for smart account
   useEffect(() => {
-    if (!targetAddress) {
-      setAddressError('Address is required');
-    } else if (!isAddress(targetAddress)) {
-      setAddressError('Invalid Ethereum address');
-    } else {
-      setAddressError('');
-    }
-  }, [targetAddress]);
+    if (!account?.address) return;
 
-  // Fetch account balance
-  const fetchBalance = async () => {
-    if (!sbcAppKit || !account) return;
-
-    try {
+    const fetchSbcBalance = async () => {
       setIsLoadingBalance(true);
-      const accountInfo = await sbcAppKit.getAccount();
-      const ethBalance = accountInfo.balance || '0';
-      const formatted = formatEther(BigInt(ethBalance));
-      
-      setBalance({
-        eth: ethBalance,
-        formatted: parseFloat(formatted).toFixed(6)
-      });
+      try {
+        const balance = await publicClient.readContract({
+          address: SBC_TOKEN_ADDRESS as `0x${string}`,
+          abi: erc20Abi,
+          functionName: 'balanceOf',
+          args: [account.address as `0x${string}`],
+        });
+        setSbcBalance(balance.toString());
+      } catch (error) {
+        console.error('Failed to fetch SBC balance for smart account:', error);
+        setSbcBalance('0');
+      } finally {
+        setIsLoadingBalance(false);
+      }
+    };
+
+    fetchSbcBalance();
+  }, [account?.address]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshAccount?.();
+      // Refresh SBC balance as well
+      if (account?.address) {
+        setIsLoadingBalance(true);
+        try {
+          const balance = await publicClient.readContract({
+            address: SBC_TOKEN_ADDRESS as `0x${string}`,
+            abi: erc20Abi,
+            functionName: 'balanceOf',
+            args: [account.address as `0x${string}`],
+          });
+          setSbcBalance(balance.toString());
+        } catch (error) {
+          console.error('Failed to refresh SBC balance:', error);
+        } finally {
+          setIsLoadingBalance(false);
+        }
+      }
     } catch (error) {
-      console.error('Failed to fetch balance:', error);
+      console.error('Failed to refresh account:', error);
     } finally {
-      setIsLoadingBalance(false);
+      setIsRefreshing(false);
     }
   };
 
-  // Fetch balance when account loads
-  useEffect(() => {
-    if (account && !isLoadingAccount) {
-      fetchBalance();
-    }
-  }, [account, isLoadingAccount]);
-
-  // Estimate gas for transaction
-  const handleEstimateGas = async () => {
-    if (!sbcAppKit || !targetAddress || addressError) return;
-
+  const formatEthBalance = (balance: string | null): string => {
+    if (!balance) return '0.0000';
     try {
-      setIsEstimating(true);
-      setGasEstimate(null);
-
-      const estimate = await estimateUserOperation({
-        to: targetAddress,
-        data: '0x',
-        value: parseEther(transferAmount).toString()
-      });
-
-      setGasEstimate(estimate);
-      console.log('Gas estimate:', estimate);
-    } catch (error) {
-      console.error('Gas estimation failed:', error);
-    } finally {
-      setIsEstimating(false);
+      return (Number(balance) / 1e18).toFixed(4);
+    } catch {
+      return '0.0000';
     }
   };
 
-  // Send ETH transfer
-  const handleSendETH = async () => {
-    if (!sbcAppKit || !targetAddress || addressError) return;
-
+  const formatSbcBalance = (balance: string | null): string => {
+    if (!balance) return '0.00';
     try {
-      await sendUserOperation({
-        to: targetAddress,
-        data: '0x',
-        value: parseEther(transferAmount).toString()
-      });
-    } catch (error) {
-      console.error('Failed to send ETH:', error);
+      return (Number(balance) / Math.pow(10, SBC_DECIMALS)).toFixed(2);
+    } catch {
+      return '0.00';
     }
   };
 
-  // Send contract interaction example (ERC-20 transfer)
-  const handleContractCall = async () => {
-    if (!sbcAppKit || !targetAddress || addressError) return;
-
-    try {
-      // Example: ERC-20 transfer function call
-      const transferCalldata = encodeFunctionData({
-        abi: [
-          {
-            name: 'transfer',
-            type: 'function',
-            inputs: [
-              { name: 'to', type: 'address' },
-              { name: 'amount', type: 'uint256' }
-            ],
-            outputs: [{ name: '', type: 'bool' }]
-          }
-        ],
-        functionName: 'transfer',
-        args: [targetAddress, parseEther('1')] // 1 token
-      });
-
-      await sendUserOperation({
-        to: '0xYourTokenContractAddress', // Replace with actual token contract
-        data: transferCalldata,
-        value: '0'
-      });
-    } catch (error) {
-      console.error('Failed to send contract call:', error);
-    }
-  };
-
-  // Handle form reset
-  const handleReset = () => {
-    reset();
-    setGasEstimate(null);
-    setTargetAddress(DEMO_TARGET);
-    setTransferAmount(DEMO_AMOUNT);
-  };
-
-  if (error) {
-    return (
-      <div className="error-container">
-        <h2>❌ Initialization Error</h2>
-        <p>{error.message}</p>
-        <div className="error-details">
-          <h3>Common Solutions:</h3>
-          <ul>
-            <li>Check your API key in the .env file</li>
-            <li>Ensure you're using a supported chain</li>
-            <li>Verify your internet connection</li>
-          </ul>
-        </div>
-        <button onClick={() => window.location.reload()}>Reload App</button>
-      </div>
-    );
-  }
-
-  if (!isInitialized) {
-    return (
-      <div className="loading-container">
-        <h2>🚀 Initializing SBC App Kit...</h2>
-        <p>Setting up your smart account...</p>
-      </div>
-    );
-  }
-
-  if (accountError) {
-    return (
-      <div className="error-container">
-        <h2>❌ Account Error</h2>
-        <p>{accountError.message}</p>
-        <button onClick={refreshAccount}>Retry</button>
-      </div>
-    );
+  if (!isInitialized || !account) {
+    return null;
   }
 
   return (
-    <div className="dashboard">
-      <header className="header">
-        <h1>{{projectName}}</h1>
-        <p>SBC Account Abstraction Demo</p>
-      </header>
-
-      <div className="grid">
-        {/* Account Information */}
-        <div className="card">
-          <h2>📱 Account Info</h2>
-          {isLoadingAccount ? (
-            <p>Loading account...</p>
-          ) : account ? (
-            <div className="account-info">
-              <div className="info-row">
-                <strong>Smart Account:</strong>
-                <code>{account.address}</code>
-              </div>
-              <div className="info-row">
-                <strong>Owner Address:</strong>
-                <code>{sbcAppKit?.getOwnerAddress()}</code>
-              </div>
-              <div className="info-row">
-                <strong>Chain:</strong>
-                <span>{{chain}} ({sbcAppKit?.getChainConfig().name})</span>
-              </div>
-              <div className="info-row">
-                <strong>Deployment:</strong>
-                <span className={account.deploymentTransaction ? 'deployed' : 'pending'}>
-                  {account.deploymentTransaction ? '✅ Deployed' : '⏳ Will deploy on first transaction'}
-                </span>
-              </div>
-              <div className="info-row">
-                <strong>Balance:</strong>
-                <span>
-                  {isLoadingBalance ? 'Loading...' : balance ? `${balance.formatted} ETH` : 'Unable to load'}
-                </span>
-                <button onClick={fetchBalance} disabled={isLoadingBalance}>🔄</button>
-              </div>
-            </div>
-          ) : (
-            <p>No account data</p>
-          )}
+    <div className="account-info">
+      <div className="account-header">
+        <h3>🔐 Smart Account</h3>
+        <button
+          onClick={handleRefresh}
+          disabled={isRefreshing || isLoadingAccount}
+          className="refresh-btn"
+        >
+          {isRefreshing || isLoadingAccount ? 'Refreshing...' : 'Refresh'}
+        </button>
+      </div>
+      <div className="account-details">
+        <div className="detail-row">
+          <span>Address:</span>
+          <span className="address">{account.address}</span>
         </div>
-
-        {/* Transaction Form */}
-        <div className="card">
-          <h2>💸 Send Transaction</h2>
-          <div className="form">
-            <div className="form-group">
-              <label htmlFor="targetAddress">Target Address:</label>
-              <input
-                id="targetAddress"
-                type="text"
-                value={targetAddress}
-                onChange={(e) => setTargetAddress(e.target.value)}
-                placeholder="0x..."
-                className={addressError ? 'error' : ''}
-              />
-              {addressError && <span className="error-text">{addressError}</span>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="amount">Amount (ETH):</label>
-              <input
-                id="amount"
-                type="number"
-                step="0.001"
-                value={transferAmount}
-                onChange={(e) => setTransferAmount(e.target.value)}
-                placeholder="0.001"
-              />
-            </div>
-
-            <div className="button-group">
-              <button 
-                onClick={handleEstimateGas}
-                disabled={!sbcAppKit || isEstimating || !!addressError || !targetAddress}
-                className="secondary"
-              >
-                {isEstimating ? 'Estimating...' : 'Estimate Gas'}
-              </button>
-              
-              <button 
-                onClick={handleSendETH}
-                disabled={!sbcAppKit || isLoading || !!addressError || !targetAddress}
-                className="primary"
-              >
-                {isLoading ? 'Sending...' : 'Send ETH'}
-              </button>
-            </div>
-
-            <button onClick={handleReset} className="link">
-              Reset Form
-            </button>
-          </div>
+        <div className="detail-row">
+          <span>Deployed:</span>
+          <span>{account.isDeployed ? '✅ Yes' : '⏳ On first transaction'}</span>
         </div>
-
-        {/* Gas Estimation Results */}
-        {gasEstimate && (
-          <div className="card">
-            <h2>⛽ Gas Estimate</h2>
-            <div className="gas-info">
-              <div className="info-row">
-                <strong>Total Gas:</strong>
-                <span>{gasEstimate.totalGasUsed}</span>
-              </div>
-              <div className="info-row">
-                <strong>Estimated Cost:</strong>
-                <span>{formatEther(BigInt(gasEstimate.totalGasCost))} ETH</span>
-              </div>
-              <div className="info-row">
-                <strong>Max Fee:</strong>
-                <span>{formatEther(BigInt(gasEstimate.maxFeePerGas))} ETH</span>
-              </div>
-              <div className="gas-breakdown">
-                <small>
-                  Verification: {gasEstimate.verificationGasLimit} | 
-                  Call: {gasEstimate.callGasLimit} | 
-                  Pre-verification: {gasEstimate.preVerificationGas}
-                </small>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Transaction Status */}
-        {(isSuccess || isError) && (
-          <div className={`card ${isSuccess ? 'success' : 'error'}`}>
-            <h2>{isSuccess ? '✅ Success!' : '❌ Error'}</h2>
-            {isSuccess && txResult && (
-              <div className="success-info">
-                <div className="info-row">
-                  <strong>Transaction Hash:</strong>
-                  <a 
-                    href={`${sbcAppKit?.getChainConfig().blockExplorers?.default?.url}/tx/${txResult.transactionHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {txResult.transactionHash}
-                  </a>
-                </div>
-                <div className="info-row">
-                  <strong>User Operation:</strong>
-                  <code>{txResult.userOperationHash}</code>
-                </div>
-                <div className="info-row">
-                  <strong>Gas Used:</strong>
-                  <span>{txResult.gasUsed}</span>
-                </div>
-              </div>
-            )}
-            {isError && txError && (
-              <div className="error-info">
-                <p>{txError.message}</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Documentation Links */}
-        <div className="card">
-          <h2>📚 Documentation</h2>
-          <div className="links">
-            <a href="https://docs.stablecoin.xyz" target="_blank" rel="noopener noreferrer">
-              📖 API Documentation
-            </a>
-            <a href="https://github.com/stablecoinxyz/app-kit" target="_blank" rel="noopener noreferrer">
-              💻 GitHub Repository
-            </a>
-          </div>
+        <div className="detail-row">
+          <span>Nonce:</span>
+          <span>{account.nonce}</span>
+        </div>
+        <div className="detail-row">
+          <span>ETH Balance:</span>
+          <span>{formatEthBalance(account.balance)} ETH</span>
+        </div>
+        <div className="detail-row">
+          <span>SBC Balance:</span>
+          <span>{isLoadingBalance ? 'Loading...' : `${formatSbcBalance(sbcBalance)} SBC`}</span>
         </div>
       </div>
     </div>
   );
 }
 
-function App() {
+function SendSBCForm() {
+  const { account, sbcAppKit, ownerAddress } = useSbcApp();
+  const { sendUserOperation, isLoading, isSuccess, isError, error: opError, data } = useUserOperation();
+  const [recipient, setRecipient] = useState('');
+  const walletClient = (sbcAppKit as any)?.walletClient;
+  const isFormValid = recipient && /^0x[a-fA-F0-9]{40}$/.test(recipient);
+
+  const handleSendSBC = async () => {
+    if (!account || !ownerAddress || !walletClient) return;
+    
+    try {
+      const ownerChecksum = getAddress(ownerAddress);
+      const spenderChecksum = getAddress(account.address);
+      const value = parseUnits('1', SBC_DECIMALS); // Send 1 SBC
+      const deadline = Math.floor(Date.now() / 1000) + 60 * 30; // 30 min
+      
+      const signature = await getPermitSignature({
+        publicClient: publicClient as PublicClient,
+        walletClient: walletClient as WalletClient,
+        owner: ownerChecksum,
+        spender: spenderChecksum,
+        value,
+        tokenAddress: SBC_TOKEN_ADDRESS,
+        chainId: {{chain}}.id,
+        deadline,
+      });
+
+      if (!signature) {
+        console.error('Error signing permit transaction');
+        return;
+      }
+      const { r, s, v } = parseSignature(signature);
+      
+      const permitCallData = encodeFunctionData({
+        abi: permitAbi,
+        functionName: 'permit',
+        args: [ownerChecksum, spenderChecksum, value, deadline, v, r, s],
+      });
+      const transferFromCallData = encodeFunctionData({
+        abi: erc20PermitAbi,
+        functionName: 'transferFrom',
+        args: [ownerChecksum, recipient as `0x${string}`, value],
+      });
+      
+      await sendUserOperation({
+        calls: [
+          { to: SBC_TOKEN_ADDRESS as `0x${string}`, data: permitCallData },
+          { to: SBC_TOKEN_ADDRESS as `0x${string}`, data: transferFromCallData },
+        ],
+      });
+    } catch (err) {
+      console.error('Transaction failed:', err);
+    }
+  };
+
+  if (!account) return null;
+
   return (
-    <SbcProvider config={config}>
-      <Dashboard />
+    <div className="send-form">
+      <h3>💸 Send 1 SBC Token</h3>
+      <div className="form-content">
+        <div className="form-group">
+          <label>Recipient Address</label>
+          <input
+            type="text"
+            value={recipient}
+            onChange={(e) => setRecipient(e.target.value)}
+            placeholder="0x..."
+            className={recipient && !isFormValid ? 'error' : ''}
+          />
+          {recipient && !/^0x[a-fA-F0-9]{40}$/.test(recipient) && (
+            <span className="error-text">Invalid Ethereum address</span>
+          )}
+        </div>
+        
+        <div className="transaction-info">
+          <div className="info-row">
+            <span>Amount:</span>
+            <span>1.00 SBC</span>
+          </div>
+          <div className="info-row">
+            <span>Gas fees:</span>
+            <span>Covered by SBC Paymaster ✨</span>
+          </div>
+          <div className="info-row">
+            <span>Signing:</span>
+            <span>Your wallet will prompt to sign 🖊️</span>
+          </div>
+        </div>
+
+        <button
+          onClick={handleSendSBC}
+          disabled={!isFormValid || isLoading || !account}
+          className="send-btn"
+        >
+          {isLoading ? 'Waiting for signature...' : 'Send 1 SBC'}
+        </button>
+
+        {isSuccess && data && (
+          <div className="success-message">
+            <p>✅ Transaction Successful!</p>
+            <a 
+              href={`https://sepolia.basescan.org/tx/${data.transactionHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              View on BaseScan: {data.transactionHash}
+            </a>
+          </div>
+        )}
+        
+        {isError && opError && (
+          <div className="error-message">
+            <p>❌ Transaction Failed</p>
+            <p>{opError.message}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function WalletConnectFlow() {
+  const { ownerAddress, disconnectWallet, refreshAccount } = useSbcApp();
+  const prevOwnerAddress = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (ownerAddress && !prevOwnerAddress.current) {
+      refreshAccount();
+    }
+    prevOwnerAddress.current = ownerAddress;
+  }, [ownerAddress, refreshAccount]);
+
+  if (!ownerAddress) {
+    return (
+      <div className="connect-prompt">
+        <h3>🔗 Connect Your Wallet</h3>
+        <p>Connect your wallet to create a smart account with gasless transactions</p>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <WalletButton
+            walletType="auto"
+            onConnect={refreshAccount}
+            render={({ onClick, isConnecting }) => (
+              <button
+                className="primary wallet-connect-btn"
+                onClick={onClick}
+                disabled={isConnecting}
+                style={{ minWidth: 160 }}
+              >
+                {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+              </button>
+            )}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <WalletStatus onDisconnect={disconnectWallet} />
+      <SmartAccountInfo />
+      <SendSBCForm />
+    </>
+  );
+}
+
+export default function App() {
+  const sbcConfig = {
+    apiKey: import.meta.env.VITE_SBC_API_KEY || '{{apiKey}}',
+    chain: {{chain}},
+    wallet: 'auto' as const,
+    debug: true,
+    walletOptions: { autoConnect: false },
+  };
+
+  return (
+    <SbcProvider config={sbcConfig}>
+      <div className="app">
+        <div className="container">
+          <header className="app-header">
+            <h1>{{projectName}}</h1>
+            <p>SBC Account Abstraction Demo</p>
+          </header>
+          <main>
+            <WalletConnectFlow />
+          </main>
+          <footer className="app-footer">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <span>Powered by</span>
+              {/* Make sure public/sbc-logo.png exists in the template and is copied to the generated app */}
+              <img src="/sbc-logo.png" alt="SBC Logo" style={{ width: 20, height: 20, verticalAlign: 'middle' }} />
+              <a href="https://stablecoin.xyz" target="_blank" rel="noopener noreferrer">
+                SBC App Kit
+              </a>
+            </div>
+          </footer>
+        </div>
+      </div>
     </SbcProvider>
   );
 }
 
-export default App; 
+// Helper to get permit signature
+async function getPermitSignature({
+  publicClient,
+  walletClient,
+  owner,
+  spender,
+  value,
+  tokenAddress,
+  chainId,
+  deadline,
+}: {
+  publicClient: PublicClient;
+  walletClient: WalletClient;
+  owner: string;
+  spender: string;
+  value: bigint;
+  tokenAddress: string;
+  chainId: number;
+  deadline: number;
+}): Promise<`0x${string}` | null> {
+  try {
+    const ownerChecksum = getAddress(owner);
+    const spenderChecksum = getAddress(spender);
+    
+    const nonce = await publicClient.readContract({
+      address: tokenAddress as `0x${string}`,
+      abi: erc20PermitAbi,
+      functionName: 'nonces',
+      args: [ownerChecksum],
+    });
+    
+    const tokenName = await publicClient.readContract({
+      address: tokenAddress as `0x${string}`,
+      abi: erc20PermitAbi,
+      functionName: 'name',
+    });
+    
+    const domain = {
+      name: tokenName as string,
+      version: '1',
+      chainId: BigInt(chainId),
+      verifyingContract: SBC_TOKEN_ADDRESS as `0x${string}`,
+    };
+    
+    const types = {
+      EIP712Domain: [
+        { name: 'name', type: 'string' },
+        { name: 'version', type: 'string' },
+        { name: 'chainId', type: 'uint256' },
+        { name: 'verifyingContract', type: 'address' },
+      ],
+      Permit: [
+        { name: 'owner', type: 'address' },
+        { name: 'spender', type: 'address' },
+        { name: 'value', type: 'uint256' },
+        { name: 'nonce', type: 'uint256' },
+        { name: 'deadline', type: 'uint256' },
+      ],
+    } as const;
+    
+    const message = {
+      owner: ownerChecksum,
+      spender: spenderChecksum,
+      value: value,
+      nonce: nonce as bigint,
+      deadline: BigInt(deadline),
+    };
+    
+    const signature = await walletClient.signTypedData({
+      account: ownerChecksum,
+      domain,
+      types,
+      primaryType: 'Permit',
+      message,
+    });
+
+    return signature;
+  } catch (e) {
+    console.error('Error in getPermitSignature:', e);
+    return null;
+  }
+} 
