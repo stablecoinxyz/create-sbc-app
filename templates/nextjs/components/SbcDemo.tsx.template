@@ -1,0 +1,93 @@
+import { SbcAppKit } from 'sbc-app-kit'
+import { useState } from 'react'
+import { encodeFunctionData } from 'viem'
+
+interface SbcDemoProps {
+  sbcKit: SbcAppKit
+}
+
+export default function SbcDemo({ sbcKit }: SbcDemoProps) {
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<any>(null)
+
+  const estimateGas = async () => {
+    setLoading(true)
+    try {
+      const estimate = await sbcKit.estimateUserOperation({
+        to: '0x1234567890123456789012345678901234567890' as const,
+        data: '0x' as const,
+        value: '0'
+      })
+      setResult({ type: 'estimate', data: estimate })
+    } catch (error) {
+      setResult({ type: 'error', data: error })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const sendERC20Transfer = async () => {
+    setLoading(true)
+    try {
+      // Example ERC-20 transfer
+      const transferData = encodeFunctionData({
+        abi: [
+          {
+            name: 'transfer',
+            type: 'function',
+            inputs: [
+              { name: 'to', type: 'address' },
+              { name: 'amount', type: 'uint256' }
+            ]
+          }
+        ],
+        functionName: 'transfer',
+        args: [
+          '0x742d35Cc6641C4532B4d4c7B4C0D1C3d4e5f6789', // recipient
+          BigInt('1000000') // 1 USDC (6 decimals)
+        ]
+      })
+
+      const estimate = await sbcKit.estimateUserOperation({
+        to: '0x036CbD53842c5426634e7929541eC2318f3dCF7e' as const, // USDC on Base Sepolia
+        data: transferData,
+        value: '0'
+      })
+
+      setResult({ type: 'erc20-estimate', data: estimate })
+    } catch (error) {
+      setResult({ type: 'error', data: error })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div style={{ margin: '2rem 0' }}>
+      <h3>SBC Kit Demo Functions</h3>
+      
+      <div style={{ display: 'flex', gap: '1rem', margin: '1rem 0' }}>
+        <button onClick={estimateGas} disabled={loading}>
+          {loading ? 'Loading...' : 'Estimate Gas'}
+        </button>
+        <button onClick={sendERC20Transfer} disabled={loading}>
+          {loading ? 'Loading...' : 'Estimate ERC-20 Transfer'}
+        </button>
+      </div>
+
+      {result && (
+        <div style={{ 
+          marginTop: '1rem', 
+          padding: '1rem', 
+          backgroundColor: result.type === 'error' ? '#fee' : '#efe',
+          borderRadius: '5px'
+        }}>
+          <h4>{result.type === 'error' ? 'Error' : 'Result'}:</h4>
+          <pre style={{ fontSize: '0.8rem', overflow: 'auto' }}>
+            {JSON.stringify(result.data, null, 2)}
+          </pre>
+        </div>
+      )}
+    </div>
+  )
+} 

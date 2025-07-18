@@ -1,0 +1,408 @@
+import React, { useState, useEffect } from 'react';
+import { SbcProvider, useSbcApp, useUserOperation } from '@stablecoin.xyz/react';
+import { {{chain}} } from 'viem/chains';
+import { encodeFunctionData, formatEther, parseEther, isAddress } from 'viem';
+import './App.css';
+
+// Load environment variables
+const config = {
+  apiKey: process.env.REACT_APP_SBC_API_KEY || '{{apiKey}}',
+  chain: {{chain}},
+  debug: process.env.REACT_APP_SBC_DEBUG === 'true',
+  privateKey: process.env.REACT_APP_PRIVATE_KEY as `0x${string}` | undefined,
+  staging: process.env.REACT_APP_SBC_STAGING === 'true'
+};
+
+// Demo constants
+const DEMO_TARGET = process.env.REACT_APP_DEMO_TARGET_ADDRESS || '0x742d35Cc6635C0532925a3b8c17f21c5F8E63231';
+const DEMO_AMOUNT = '0.001'; // ETH amount for demo
+
+interface BalanceInfo {
+  eth: string;
+  formatted: string;
+}
+
+function Dashboard() {
+  const { 
+    sbcAppKit, 
+    isInitialized, 
+    error, 
+    account, 
+    isLoadingAccount, 
+    accountError,
+    refreshAccount 
+  } = useSbcApp();
+
+  const { 
+    sendUserOperation, 
+    estimateUserOperation,
+    isLoading, 
+    isSuccess, 
+    isError, 
+    error: txError, 
+    data: txResult,
+    reset 
+  } = useUserOperation({
+    onSuccess: (result) => {
+      console.log('Transaction successful!', result);
+      refreshAccount();
+      fetchBalance();
+    },
+    onError: (error) => {
+      console.error('Transaction failed:', error);
+    }
+  });
+
+  // State management
+  const [targetAddress, setTargetAddress] = useState(DEMO_TARGET);
+  const [transferAmount, setTransferAmount] = useState(DEMO_AMOUNT);
+  const [addressError, setAddressError] = useState('');
+  const [balance, setBalance] = useState<BalanceInfo | null>(null);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+  const [gasEstimate, setGasEstimate] = useState<any>(null);
+  const [isEstimating, setIsEstimating] = useState(false);
+
+  // Validate address input
+  useEffect(() => {
+    if (!targetAddress) {
+      setAddressError('Address is required');
+    } else if (!isAddress(targetAddress)) {
+      setAddressError('Invalid Ethereum address');
+    } else {
+      setAddressError('');
+    }
+  }, [targetAddress]);
+
+  // Fetch account balance
+  const fetchBalance = async () => {
+    if (!sbcAppKit || !account) return;
+
+    try {
+      setIsLoadingBalance(true);
+      const accountInfo = await sbcAppKit.getAccount();
+      const ethBalance = accountInfo.balance || '0';
+      const formatted = formatEther(BigInt(ethBalance));
+      
+      setBalance({
+        eth: ethBalance,
+        formatted: parseFloat(formatted).toFixed(6)
+      });
+    } catch (error) {
+      console.error('Failed to fetch balance:', error);
+    } finally {
+      setIsLoadingBalance(false);
+    }
+  };
+
+  // Fetch balance when account loads
+  useEffect(() => {
+    if (account && !isLoadingAccount) {
+      fetchBalance();
+    }
+  }, [account, isLoadingAccount]);
+
+  // Estimate gas for transaction
+  const handleEstimateGas = async () => {
+    if (!sbcAppKit || !targetAddress || addressError) return;
+
+    try {
+      setIsEstimating(true);
+      setGasEstimate(null);
+
+      const estimate = await estimateUserOperation({
+        to: targetAddress,
+        data: '0x',
+        value: parseEther(transferAmount).toString()
+      });
+
+      setGasEstimate(estimate);
+      console.log('Gas estimate:', estimate);
+    } catch (error) {
+      console.error('Gas estimation failed:', error);
+    } finally {
+      setIsEstimating(false);
+    }
+  };
+
+  // Send ETH transfer
+  const handleSendETH = async () => {
+    if (!sbcAppKit || !targetAddress || addressError) return;
+
+    try {
+      await sendUserOperation({
+        to: targetAddress,
+        data: '0x',
+        value: parseEther(transferAmount).toString()
+      });
+    } catch (error) {
+      console.error('Failed to send ETH:', error);
+    }
+  };
+
+  // Send contract interaction example (ERC-20 transfer)
+  const handleContractCall = async () => {
+    if (!sbcAppKit || !targetAddress || addressError) return;
+
+    try {
+      // Example: ERC-20 transfer function call
+      const transferCalldata = encodeFunctionData({
+        abi: [
+          {
+            name: 'transfer',
+            type: 'function',
+            inputs: [
+              { name: 'to', type: 'address' },
+              { name: 'amount', type: 'uint256' }
+            ],
+            outputs: [{ name: '', type: 'bool' }]
+          }
+        ],
+        functionName: 'transfer',
+        args: [targetAddress, parseEther('1')] // 1 token
+      });
+
+      await sendUserOperation({
+        to: '0xYourTokenContractAddress', // Replace with actual token contract
+        data: transferCalldata,
+        value: '0'
+      });
+    } catch (error) {
+      console.error('Failed to send contract call:', error);
+    }
+  };
+
+  // Handle form reset
+  const handleReset = () => {
+    reset();
+    setGasEstimate(null);
+    setTargetAddress(DEMO_TARGET);
+    setTransferAmount(DEMO_AMOUNT);
+  };
+
+  if (error) {
+    return (
+      <div className="error-container">
+        <h2>❌ Initialization Error</h2>
+        <p>{error.message}</p>
+        <div className="error-details">
+          <h3>Common Solutions:</h3>
+          <ul>
+            <li>Check your API key in the .env file</li>
+            <li>Ensure you're using a supported chain</li>
+            <li>Verify your internet connection</li>
+          </ul>
+        </div>
+        <button onClick={() => window.location.reload()}>Reload App</button>
+      </div>
+    );
+  }
+
+  if (!isInitialized) {
+    return (
+      <div className="loading-container">
+        <h2>🚀 Initializing SBC App Kit...</h2>
+        <p>Setting up your smart account...</p>
+      </div>
+    );
+  }
+
+  if (accountError) {
+    return (
+      <div className="error-container">
+        <h2>❌ Account Error</h2>
+        <p>{accountError.message}</p>
+        <button onClick={refreshAccount}>Retry</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="dashboard">
+      <header className="header">
+        <h1>{{projectName}}</h1>
+        <p>SBC Account Abstraction Demo</p>
+      </header>
+
+      <div className="grid">
+        {/* Account Information */}
+        <div className="card">
+          <h2>📱 Account Info</h2>
+          {isLoadingAccount ? (
+            <p>Loading account...</p>
+          ) : account ? (
+            <div className="account-info">
+              <div className="info-row">
+                <strong>Smart Account:</strong>
+                <code>{account.address}</code>
+              </div>
+              <div className="info-row">
+                <strong>Owner Address:</strong>
+                <code>{sbcAppKit?.getOwnerAddress()}</code>
+              </div>
+              <div className="info-row">
+                <strong>Chain:</strong>
+                <span>{{chain}} ({sbcAppKit?.getChainConfig().name})</span>
+              </div>
+              <div className="info-row">
+                <strong>Deployment:</strong>
+                <span className={account.deploymentTransaction ? 'deployed' : 'pending'}>
+                  {account.deploymentTransaction ? '✅ Deployed' : '⏳ Will deploy on first transaction'}
+                </span>
+              </div>
+              <div className="info-row">
+                <strong>Balance:</strong>
+                <span>
+                  {isLoadingBalance ? 'Loading...' : balance ? `${balance.formatted} ETH` : 'Unable to load'}
+                </span>
+                <button onClick={fetchBalance} disabled={isLoadingBalance}>🔄</button>
+              </div>
+            </div>
+          ) : (
+            <p>No account data</p>
+          )}
+        </div>
+
+        {/* Transaction Form */}
+        <div className="card">
+          <h2>💸 Send Transaction</h2>
+          <div className="form">
+            <div className="form-group">
+              <label htmlFor="targetAddress">Target Address:</label>
+              <input
+                id="targetAddress"
+                type="text"
+                value={targetAddress}
+                onChange={(e) => setTargetAddress(e.target.value)}
+                placeholder="0x..."
+                className={addressError ? 'error' : ''}
+              />
+              {addressError && <span className="error-text">{addressError}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="amount">Amount (ETH):</label>
+              <input
+                id="amount"
+                type="number"
+                step="0.001"
+                value={transferAmount}
+                onChange={(e) => setTransferAmount(e.target.value)}
+                placeholder="0.001"
+              />
+            </div>
+
+            <div className="button-group">
+              <button 
+                onClick={handleEstimateGas}
+                disabled={!sbcAppKit || isEstimating || !!addressError || !targetAddress}
+                className="secondary"
+              >
+                {isEstimating ? 'Estimating...' : 'Estimate Gas'}
+              </button>
+              
+              <button 
+                onClick={handleSendETH}
+                disabled={!sbcAppKit || isLoading || !!addressError || !targetAddress}
+                className="primary"
+              >
+                {isLoading ? 'Sending...' : 'Send ETH'}
+              </button>
+            </div>
+
+            <button onClick={handleReset} className="link">
+              Reset Form
+            </button>
+          </div>
+        </div>
+
+        {/* Gas Estimation Results */}
+        {gasEstimate && (
+          <div className="card">
+            <h2>⛽ Gas Estimate</h2>
+            <div className="gas-info">
+              <div className="info-row">
+                <strong>Total Gas:</strong>
+                <span>{gasEstimate.totalGasUsed}</span>
+              </div>
+              <div className="info-row">
+                <strong>Estimated Cost:</strong>
+                <span>{formatEther(BigInt(gasEstimate.totalGasCost))} ETH</span>
+              </div>
+              <div className="info-row">
+                <strong>Max Fee:</strong>
+                <span>{formatEther(BigInt(gasEstimate.maxFeePerGas))} ETH</span>
+              </div>
+              <div className="gas-breakdown">
+                <small>
+                  Verification: {gasEstimate.verificationGasLimit} | 
+                  Call: {gasEstimate.callGasLimit} | 
+                  Pre-verification: {gasEstimate.preVerificationGas}
+                </small>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Transaction Status */}
+        {(isSuccess || isError) && (
+          <div className={`card ${isSuccess ? 'success' : 'error'}`}>
+            <h2>{isSuccess ? '✅ Success!' : '❌ Error'}</h2>
+            {isSuccess && txResult && (
+              <div className="success-info">
+                <div className="info-row">
+                  <strong>Transaction Hash:</strong>
+                  <a 
+                    href={`${sbcAppKit?.getChainConfig().blockExplorers?.default?.url}/tx/${txResult.transactionHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {txResult.transactionHash}
+                  </a>
+                </div>
+                <div className="info-row">
+                  <strong>User Operation:</strong>
+                  <code>{txResult.userOperationHash}</code>
+                </div>
+                <div className="info-row">
+                  <strong>Gas Used:</strong>
+                  <span>{txResult.gasUsed}</span>
+                </div>
+              </div>
+            )}
+            {isError && txError && (
+              <div className="error-info">
+                <p>{txError.message}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Documentation Links */}
+        <div className="card">
+          <h2>📚 Documentation</h2>
+          <div className="links">
+            <a href="https://docs.stablecoin.xyz" target="_blank" rel="noopener noreferrer">
+              📖 API Documentation
+            </a>
+            <a href="https://github.com/stablecoinxyz/app-kit" target="_blank" rel="noopener noreferrer">
+              💻 GitHub Repository
+            </a>
+            <a href="https://docs.stablecoin.xyz/guides" target="_blank" rel="noopener noreferrer">
+              🎯 Integration Guides
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <SbcProvider config={config}>
+      <Dashboard />
+    </SbcProvider>
+  );
+}
+
+export default App; 

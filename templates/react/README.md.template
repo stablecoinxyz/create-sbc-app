@@ -1,0 +1,146 @@
+# {{projectName}}
+
+A gasless smart account application powered by [SBC (Stable Coin Inc)](https://stablecoin.xyz).
+
+## 🚀 Quick Start
+
+### 1. Install Dependencies
+```bash
+npm install
+```
+
+### 2. Configure Environment Variables
+Copy the example environment file and add your SBC API key:
+
+```bash
+cp .env.example .env # Optional: for local overrides
+```
+
+Edit `.env` and add your SBC API key:
+```bash
+VITE_SBC_API_KEY=your_api_key_here
+VITE_SBC_CHAIN={{chain}}
+VITE_SBC_DEBUG=true
+```
+
+> **Get your API key:** Visit the [SBC Dashboard](https://dashboard.stablecoin.xyz) to create an account and get your API key.
+
+### 3. Start the Development Server
+```bash
+npm run dev
+```
+
+Your app will be available at `http://localhost:3000` 🎉
+
+## 🔥 What You'll See
+
+This example app demonstrates:
+
+- **🔗 Wallet Connection**: Connect any Ethereum wallet
+- **🏦 Smart Account Creation**: Automatically creates a gasless smart account
+- **⛽ Gasless Transactions**: Send transactions without paying gas fees
+- **💰 Balance Checking**: Check your account balance
+- **🔧 Ready-to-Use Setup**: Environment variables and error handling included
+
+## 🛠 How It Works
+
+### Environment Variables (Vite)
+The app uses Vite's environment variables with the `VITE_` prefix:
+
+```typescript
+const config = {
+  apiKey: import.meta.env.VITE_SBC_API_KEY,
+  chain: {{chain}},
+  debug: import.meta.env.VITE_SBC_DEBUG === 'true'
+};
+```
+
+### SBC Integration
+```typescript
+import { SbcProvider, useSbcApp, WalletConnect } from '@stablecoin.xyz/react';
+
+// 1. Wrap your app with SbcProvider
+<SbcProvider config={config}>
+  <YourApp />
+</SbcProvider>
+
+// 2. Use the SBC hooks
+const { sbcAppKit, account, isInitialized } = useSbcApp();
+
+// 3. Send gasless transactions
+const tx = await sbcAppKit.sendTransaction({
+  to: recipientAddress,
+  value: parseEther('0.001'),
+  data: '0x'
+});
+```
+
+## 📚 Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+
+## 🔧 Development
+
+### Project Structure
+```
+src/
+├── App.tsx          # Main app with SBC integration
+├── main.tsx         # Vite entry point
+├── App.css          # Styles
+└── index.css        # Global styles
+```
+
+### Adding Your Own Features
+
+1. **Custom Transactions**: Modify the `sendGaslessTransaction` function in `App.tsx`
+2. **Smart Contract Interactions**: Use `sbcAppKit.sendTransaction()` with contract calls
+3. **Additional UI**: Add new components and import them in `App.tsx`
+
+## 🌐 Chain Configuration
+
+This app is configured for **{{chain}}**. To use a different chain:
+
+1. Update `.env`:
+   ```bash
+   VITE_SBC_CHAIN=your_chain_here
+   ```
+
+2. Update the import in `App.tsx`:
+   ```typescript
+   import { yourChain } from 'viem/chains';
+   ```
+
+## 📖 Learn More
+
+- [SBC Documentation](https://docs.stablecoin.xyz)
+- [SBC React SDK](https://www.npmjs.com/package/@stablecoin.xyz/react)
+- [Viem Documentation](https://viem.sh)
+- [React Documentation](https://react.dev)
+
+## 🆘 Troubleshooting
+
+### "Configuration Required" Error
+- Make sure you've set `VITE_SBC_API_KEY` in your `.env` file
+- Restart the dev server after changing environment variables
+
+### Transaction Failures
+- Check that you're on the correct network ({{chain}})
+- Ensure your wallet has a small amount of ETH for account deployment
+- Check the browser console for detailed error messages
+
+### Build Issues
+- Make sure all dependencies are installed: `npm install`
+- Try clearing the cache: `rm -rf node_modules package-lock.json && npm install`
+
+## 🔐 Security
+
+- Never commit your `.env` file with real API keys
+- Use `.env.local` for local development overrides
+- The `.env` file in this template is for demonstration only
+
+---
+
+**Happy building with SBC! 🚀** 

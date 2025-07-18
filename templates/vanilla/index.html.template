@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{projectName}}</title>
+    <link rel="stylesheet" href="src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>{{projectName}}</h1>
+        <p>SBC-powered Vanilla JavaScript Application</p>
+      </header>
+
+      <main>
+        <div class="card-grid">
+          <div class="card">
+            <h2>🔗 Account Status</h2>
+            <div id="account-info">
+              <p>Loading account information...</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>⚡ Gas Estimation</h2>
+            <button id="estimate-tx" disabled>Estimate Gas</button>
+            <div id="estimate-result">
+              <p class="note">Click to estimate gas for a test transaction</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>💸 Send Transaction</h2>
+            <button id="send-tx" disabled>Send Test Transaction</button>
+            <div id="tx-result">
+              <p class="note">Update transaction parameters in main.js before testing</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>📚 Documentation</h2>
+            <ul>
+              <li><a href="https://docs.stablecoin.xyz" target="_blank">API Documentation</a></li>
+              <li><a href="https://t.me/stablecoin_xyz" target="_blank">Telegram Community</a></li>
+            </ul>
+          </div>
+        </div>
+      </main>
+
+      <footer>
+        <p>Powered by SBC App Kit</p>
+      </footer>
+    </div>
+
+    <script type="module" src="src/main.ts"></script>
+  </body>
+</html> 

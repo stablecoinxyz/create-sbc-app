@@ -1,0 +1,14 @@
+{
+  "name": "create-sbc-app",
+  "version": "0.1.0",
+  "description": "Scaffold a new SBC App Kit project with one command.",
+  "bin": {
+    "create-sbc-app": "bin/index.js"
+  },
+  "type": "module",
+  "dependencies": {
+    "commander": "^11.0.0",
+    "prompts": "^2.4.2",
+    "fs-extra": "^11.1.1"
+  }
+} 

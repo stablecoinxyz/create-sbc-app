@@ -1,0 +1,48 @@
+# Node modules
+node_modules/
+
+# Build output
+dist/
+build/
+.next/
+.out/
+coverage/
+
+# Vite/Next.js/React cache
+.vite/
+.next/
+
+# Environment files
+.env
+.env.*
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.idea/
+.vscode/
+
+# Misc
+*.local
+*.sublime-workspace
+*.sublime-project
+
+# Test output
+*.test-results
+
+# Mac system files
+.AppleDouble
+.LSOverride
+
+# Optional: lock files (if you want to ignore them in templates)
+# package-lock.json
+yarn.lock
+pnpm-lock.yaml
