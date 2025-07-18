@@ -3,12 +3,21 @@
   "version": "0.1.0",
   "description": "Scaffold a new SBC App Kit project with one command.",
   "bin": {
-    "create-sbc-app": "bin/index.js"
+    "create-sbc-app": "bin/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node bin/cli.js"
   },
   "type": "module",
   "dependencies": {
     "commander": "^11.0.0",
-    "prompts": "^2.4.2",
-    "fs-extra": "^11.1.1"
+    "fs-extra": "^11.1.1",
+    "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "typescript": "^5.8.3"
   }
-} 
+}

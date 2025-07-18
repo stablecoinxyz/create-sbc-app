@@ -15,7 +15,7 @@ const config = {
 
 // Demo constants
 const DEMO_TARGET = process.env.REACT_APP_DEMO_TARGET_ADDRESS || '0x742d35Cc6635C0532925a3b8c17f21c5F8E63231';
-const DEMO_AMOUNT = '0.001'; // ETH amount for demo
+const DEMO_AMOUNT = '0.01'; // ETH amount for demo
 
 interface BalanceInfo {
   eth: string;
@@ -386,9 +386,6 @@ function Dashboard() {
             </a>
             <a href="https://github.com/stablecoinxyz/app-kit" target="_blank" rel="noopener noreferrer">
               💻 GitHub Repository
-            </a>
-            <a href="https://docs.stablecoin.xyz/guides" target="_blank" rel="noopener noreferrer">
-              🎯 Integration Guides
             </a>
           </div>
         </div>
