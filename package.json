@@ -1,6 +1,6 @@
 {
   "name": "create-sbc-app",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Scaffold a new SBC App Kit project with one command.",
   "bin": {
     "create-sbc-app": "bin/cli.js"
@@ -8,7 +8,15 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "start": "node bin/cli.js"
+    "start": "node bin/cli.js",
+    "prepublishOnly": "npm run build",
+    "preversion": "npm run build && npm run test-pack",
+    "test-pack": "npm pack --dry-run",
+    "test-cli": "mkdir -p test-cli && cd test-cli && node ../bin/cli.js test-app --template react && rm -rf test-cli",
+    "prepare-publish": "npm run build && npm run test-pack && npm run test-cli",
+    "publish-patch": "npm run prepare-publish && npm version patch && npm publish",
+    "publish-minor": "npm run prepare-publish && npm version minor && npm publish",
+    "publish-major": "npm run prepare-publish && npm version major && npm publish"
   },
   "type": "module",
   "dependencies": {
@@ -19,5 +27,36 @@
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
     "typescript": "^5.8.3"
+  },
+  "files": [
+    "bin/",
+    "templates/",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stablecoinxyz/create-sbc-app.git"
+  },
+  "keywords": [
+    "sbc",
+    "account-abstraction",
+    "ethereum",
+    "create-app",
+    "template",
+    "react",
+    "nextjs",
+    "vite"
+  ],
+  "author": "SBC Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/stablecoinxyz/create-sbc-app/issues"
+  },
+  "homepage": "https://github.com/stablecoinxyz/create-sbc-app#readme",
+  "publishConfig": {
+    "access": "public"
   }
 }

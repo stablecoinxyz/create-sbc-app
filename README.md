@@ -6,19 +6,46 @@ The easiest way to get started with SBC Account Abstraction. Create feature-comp
 
 ```bash
 # Create a new SBC app
-npx create-sbc-app my-sbc-app
+npx create-sbc-app my-app
+
+# Or specify a template directly
+npx create-sbc-app my-app --template react
 
 # Navigate to your app
-cd my-sbc-app
+cd my-app
 
 # Install dependencies
-npm install
-
-# Set up your environment variables
-# Copy .env.template to .env and add your API key
+pnpm install # or npm install
 
 # Start development server
-npm run dev
+pnpm dev # or npm run dev
+```
+
+## CLI Options
+
+```bash
+Usage: create-sbc-app [project-directory] [options]
+
+Create a new SBC App Kit project with an opinionated template
+
+Arguments:
+  project-directory        Directory to create the new app in
+
+Options:
+  -V, --version           output the version number
+  -t, --template <type>   Template to use: react, nextjs, or backend
+  --api-key <apiKey>      Your SBC API key for immediate configuration
+  --wallet <wallet>       Wallet integration (not yet implemented)
+  -h, --help             display help for command
+
+Examples:
+  $ create-sbc-app my-app
+  $ create-sbc-app my-app --template react
+  $ create-sbc-app my-app --template react --api-key your-api-key
+
+Available Templates:
+  - react    React + Vite template with SBC integration
+  - nextjs   Next.js template with SBC integration (coming soon)
 ```
 
 ## ✨ Features
