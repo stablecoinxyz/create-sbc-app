@@ -12,10 +12,22 @@ const program = new Command();
 
 program
   .name('create-sbc-app')
+  .description('Create a new SBC App Kit project with an opinionated template')
+  .version('0.1.0')
   .argument('[project-directory]', 'Directory to create the new app in')
-  .option('-t, --template <template>', 'Template to use (react, nextjs, backend)')
-  .option('--api-key <apiKey>', 'Your SBC API key')
+  .option('-t, --template <template>', 'Template to use: react, nextjs, or backend')
+  .option('--api-key <apiKey>', 'Your SBC API key for immediate configuration')
   .option('--wallet <wallet>', 'Wallet integration (not yet implemented)')
+  .addHelpText('after', `
+Examples:
+  $ create-sbc-app my-app
+  $ create-sbc-app my-app --template react
+  $ create-sbc-app my-app --template react --api-key your-api-key
+
+Available Templates:
+  - react    React + Vite template with SBC integration
+  - nextjs   Next.js template with SBC integration (coming soon)
+`)
   .action(async (dir, options) => {
     if (options.wallet) {
       console.log('Wallet integration not yet implemented.');
@@ -24,8 +36,7 @@ program
 
     const templateChoices = [
       { title: 'React', value: 'react' },
-      { title: 'Next.js', value: 'nextjs' },
-      { title: 'Backend', value: 'backend' }
+      { title: 'Next.js', value: 'nextjs' }
     ];
 
     // Use provided argument or prompt for project directory
@@ -44,7 +55,7 @@ program
     }
 
     // Use provided option or prompt for template
-    let template = options.template && ['react', 'nextjs', 'backend'].includes(options.template) ? options.template : '';
+    let template = options.template && ['react', 'nextjs'].includes(options.template) ? options.template : '';
     if (!template) {
       const res = await prompts({
         type: 'select',
@@ -56,8 +67,8 @@ program
         console.log('Template selection is required.');
         process.exit(1);
       }
-      template = templateChoices[res.template]?.value;
-      if (!template) {
+      template = res.template; // The value is already what we want from the choices
+      if (!template || !['react', 'nextjs'].includes(template)) {
         console.log('Template selection is required.');
         process.exit(1);
       }
@@ -104,11 +115,7 @@ program
       console.log(`  # Edit .env and add your SBC API key`);
     }
     console.log(`  pnpm install # or npm install`);
-    if (template === 'backend') {
-      console.log('  pnpm start   # or npm run start');
-    } else {
-      console.log('  pnpm dev     # or npm run dev');
-    }
+    console.log('  pnpm dev     # or npm run dev');
     console.log('\nHappy hacking!');
   });
 
