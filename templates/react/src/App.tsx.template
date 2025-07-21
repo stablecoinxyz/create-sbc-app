@@ -1,15 +1,41 @@
 import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import { SbcProvider, WalletButton, useSbcApp, useUserOperation } from '@stablecoin.xyz/react';
-import { {{chain}} } from 'viem/chains';
+import { base, baseSepolia } from 'viem/chains';
 import { createPublicClient, http, getAddress, parseSignature, WalletClient, PublicClient } from 'viem';
 import { parseUnits, encodeFunctionData, erc20Abi } from 'viem';
 import './App.css';
 
-// SBC Token Configuration
-const SBC_TOKEN_ADDRESS = '0xf9FB20B8E097904f0aB7d12e9DbeE88f2dcd0F16';
-const SBC_DECIMALS = 6;
+// Chain selection helpers
+const chain = (import.meta.env.VITE_CHAIN === 'base') ? base : baseSepolia;
 
-const publicClient = createPublicClient({ chain: {{chain}}, transport: http() });
+const SBC_TOKEN_ADDRESS = (chain) => {
+  if (chain.id === baseSepolia.id) {
+    return '0xf9FB20B8E097904f0aB7d12e9DbeE88f2dcd0F16';
+  } else if (chain.id === base.id) {
+    return '0xfdcC3dd6671eaB0709A4C0f3F53De9a333d80798';
+  }
+  throw new Error('Unsupported chain');
+};
+
+const SBC_DECIMALS = (chain) => {
+  if (chain.id === baseSepolia.id) {
+    return 6;
+  } else if (chain.id === base.id) {
+    return 18;
+  }
+  throw new Error('Unsupported chain');
+};
+
+const chainExplorer = (chain) => {
+  if (chain.id === baseSepolia.id) {
+    return 'https://sepolia.basescan.org';
+  } else if (chain.id === base.id) {
+    return 'https://basescan.org';
+  }
+  throw new Error('Unsupported chain');
+};
+
+const publicClient = createPublicClient({ chain, transport: http() });
 
 const erc20PermitAbi = [
   ...erc20Abi,
@@ -63,6 +89,10 @@ function WalletStatus({ onDisconnect }: { onDisconnect: () => void }) {
         <label>Connection:</label>
         <div className="value">Connected via wallet extension</div>
       </div>
+      <div className="info-row">
+        <label>Chain:</label>
+        <div className="value">{chain.name}</div>
+      </div>
     </div>
   );
 }
@@ -81,7 +111,7 @@ function SmartAccountInfo() {
       setIsLoadingBalance(true);
       try {
         const balance = await publicClient.readContract({
-          address: SBC_TOKEN_ADDRESS as `0x${string}`,
+          address: SBC_TOKEN_ADDRESS(chain) as `0x${string}`,
           abi: erc20Abi,
           functionName: 'balanceOf',
           args: [account.address as `0x${string}`],
@@ -107,7 +137,7 @@ function SmartAccountInfo() {
         setIsLoadingBalance(true);
         try {
           const balance = await publicClient.readContract({
-            address: SBC_TOKEN_ADDRESS as `0x${string}`,
+            address: SBC_TOKEN_ADDRESS(chain) as `0x${string}`,
             abi: erc20Abi,
             functionName: 'balanceOf',
             args: [account.address as `0x${string}`],
@@ -138,7 +168,7 @@ function SmartAccountInfo() {
   const formatSbcBalance = (balance: string | null): string => {
     if (!balance) return '0.00';
     try {
-      return (Number(balance) / Math.pow(10, SBC_DECIMALS)).toFixed(2);
+      return (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(2);
     } catch {
       return '0.00';
     }
@@ -198,7 +228,7 @@ function SendSBCForm() {
     try {
       const ownerChecksum = getAddress(ownerAddress);
       const spenderChecksum = getAddress(account.address);
-      const value = parseUnits('1', SBC_DECIMALS); // Send 1 SBC
+      const value = parseUnits('1', SBC_DECIMALS(chain)); // Send 1 SBC
       const deadline = Math.floor(Date.now() / 1000) + 60 * 30; // 30 min
       
       const signature = await getPermitSignature({
@@ -207,8 +237,8 @@ function SendSBCForm() {
         owner: ownerChecksum,
         spender: spenderChecksum,
         value,
-        tokenAddress: SBC_TOKEN_ADDRESS,
-        chainId: {{chain}}.id,
+        tokenAddress: SBC_TOKEN_ADDRESS(chain),
+        chainId: chain.id,
         deadline,
       });
 
@@ -231,8 +261,8 @@ function SendSBCForm() {
       
       await sendUserOperation({
         calls: [
-          { to: SBC_TOKEN_ADDRESS as `0x${string}`, data: permitCallData },
-          { to: SBC_TOKEN_ADDRESS as `0x${string}`, data: transferFromCallData },
+          { to: SBC_TOKEN_ADDRESS(chain) as `0x${string}`, data: permitCallData },
+          { to: SBC_TOKEN_ADDRESS(chain) as `0x${string}`, data: transferFromCallData },
         ],
       });
     } catch (err) {
@@ -286,7 +316,7 @@ function SendSBCForm() {
         <div className="success-message">
           <p>✅ Transaction Successful!</p>
           <a 
-            href={`https://sepolia.basescan.org/tx/${data.transactionHash}`}
+            href={`${chainExplorer(chain)}/tx/${data.transactionHash}`}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -369,7 +399,7 @@ function ThemeToggle() {
 export default function App() {
   const sbcConfig = {
     apiKey: import.meta.env.VITE_SBC_API_KEY || '{{apiKey}}',
-    chain: {{chain}},
+    chain,
     wallet: 'auto' as const,
     debug: true,
     walletOptions: { autoConnect: false },
@@ -462,7 +492,7 @@ async function getPermitSignature({
       name: tokenName as string,
       version: '1',
       chainId: BigInt(chainId),
-      verifyingContract: SBC_TOKEN_ADDRESS as `0x${string}`,
+      verifyingContract: tokenAddress as `0x${string}`,
     };
     
     const types = {

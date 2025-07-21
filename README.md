@@ -105,6 +105,8 @@ The template includes comprehensive environment configuration:
 ```bash
 # Your SBC API key (get from SBC dashboard)
 VITE_SBC_API_KEY=your_api_key_here
+# "base" or "baseSepolia"
+VITE_CHAIN="baseSepolia"
 ```
 
 ## 📱 UI Components
