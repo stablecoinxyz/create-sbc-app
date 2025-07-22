@@ -16,11 +16,14 @@ Copy the example environment file and add your SBC API key:
 cp .env.example .env # Optional: for local overrides
 ```
 
-Edit `.env` and add your SBC API key:
+Edit `.env` and add your SBC API key and Chain, with the optional for a custom RPC:
 ```bash
-VITE_SBC_API_KEY=your_api_key_here
-VITE_SBC_CHAIN={{chain}}
-VITE_SBC_DEBUG=true
+# "base" or "baseSepolia"
+VITE_CHAIN="baseSepolia" 
+# Custom RPC URL (optional) - e.g. get one from Alchemey at https://dashboard.alchemy.com/apps
+VITE_RPC_URL=
+# Get your SBC API Key at https://dashboard.stablecoin.xyz
+VITE_SBC_API_KEY=
 ```
 
 > **Get your API key:** Visit the [SBC Dashboard](https://dashboard.stablecoin.xyz) to create an account and get your API key.

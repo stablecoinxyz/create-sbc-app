@@ -134,8 +134,14 @@ cd my-sbc-app
 # Copy environment template
 cp .env.template .env
 
-# Add your API key
-echo "VITE_SBC_API_KEY=your_actual_api_key" >> .env
+# then ensure your .env has the environment variables set up
+
+# "base" or "baseSepolia"
+VITE_CHAIN="baseSepolia" 
+# Custom RPC URL (optional) - e.g. get one from Alchemey at https://dashboard.alchemy.com/apps
+VITE_RPC_URL=
+# Get your SBC API Key at https://dashboard.stablecoin.xyz
+VITE_SBC_API_KEY=
 ```
 
 ### 3. Start Development
