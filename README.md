@@ -166,8 +166,8 @@ npm run dev
 
 ## 📚 Documentation
 
-- **[SBC API Documentation](https://docs.stablecoin.xyz)** - Complete API reference
-- **[GitHub Repository](https://github.com/stablecoinxyz/app-kit)** - Source code and examples
+- **[SBC Documentation](https://docs.stablecoin.xyz)** - Official docs
+- **[GitHub Repository](https://github.com/stablecoinxyz/app-kit)** - AppKit API Reference. Source code and examples
 
 ## 📄 License
 
