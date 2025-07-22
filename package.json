@@ -1,6 +1,6 @@
 {
   "name": "create-sbc-app",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Scaffold a new SBC App Kit project with one command.",
   "bin": {
     "create-sbc-app": "bin/cli.js"
