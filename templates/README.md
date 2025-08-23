@@ -5,13 +5,22 @@ This directory contains ready-to-use templates for quickly starting new projects
 ## Available Templates
 
 - **react/** – Minimal React app with SBC integration (Vite)
+- **react-dynamic/** – React + Dynamic wallet + SBC App Kit (Vite)
+- **react-para/** – React + Para wallet + SBC App Kit (Vite)
 
 ## How to Use a Template
 
 1. **Copy the template directory** you want to use:
 
    ```bash
+   # Plain React template
    cp -r create-sbc-app/react my-new-sbc-app
+
+   # Dynamic wallet template
+   cp -r create-sbc-app/react-dynamic my-dynamic-app
+
+   # Para wallet template
+   cp -r create-sbc-app/react-para my-para-app
    ```
 
 2. **Install dependencies:**
@@ -32,8 +41,8 @@ This directory contains ready-to-use templates for quickly starting new projects
    ```
 
 4. **Customize as needed:**
-   - Update the API key and config in `src/App.tsx` or `app/page.tsx`.
-   - Follow the template’s README for more details.
+   - Update the API key and config in `src/App.tsx`.
+   - Follow each template’s README for specific details and environment variables.
 
 ## Keeping Templates Up to Date
 
