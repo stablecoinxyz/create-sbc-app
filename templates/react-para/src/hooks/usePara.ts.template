@@ -1,0 +1,34 @@
+import { useAccount, useWallet } from "@getpara/react-sdk";
+import { useParaViem } from "./useParaViem";
+import { baseSepolia, base } from 'viem/chains';
+
+// default to baseSepolia, but can be overridden with VITE_CHAIN=base
+const chain = (import.meta.env.VITE_CHAIN === 'base') ? base : baseSepolia;
+const rpcUrl = import.meta.env.VITE_RPC_URL || 'https://sepolia.base.org';
+
+/**
+ * Return Para wallet + viem clients for signing
+ */
+export function usePara() {
+  const { isConnected } = useAccount();
+  const { data: wallet } = useWallet();
+  const { clients, isLoading, error } = useParaViem(chain, rpcUrl);
+
+  const address = wallet?.address as `0x${string}` | undefined;
+  const walletId = wallet?.id;
+
+  return {
+    isConnected,
+    address,
+    walletId,
+    publicClient: clients?.publicClient || null,
+    walletClient: clients?.walletClient || null,
+    account: clients?.account || null,
+    isLoading,
+    error,
+    wallet: { isConnected, address, walletId },
+    viem: clients,
+  };
+}
+
+

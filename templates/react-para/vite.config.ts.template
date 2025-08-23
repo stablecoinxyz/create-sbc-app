@@ -1,0 +1,74 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
+
+// Strip sourceMappingURL comments from problematic vendor files to silence missing sourcemap warnings
+function stripVendorSourcemaps() {
+  const vendorRe = /node_modules\/(?:@walletconnect|@cosmjs|@cosmsnap)\//;
+  const mapLine = /\/\/#\s*sourceMappingURL=.*$/gm;
+  return {
+    name: 'strip-vendor-sourcemaps',
+    enforce: 'post' as const,
+    transform(code: string, id: string) {
+      if (!vendorRe.test(id)) return null;
+      if (!mapLine.test(code)) return null;
+      const cleaned = code.replace(mapLine, '');
+      return { code: cleaned, map: null };
+    }
+  }
+}
+
+// Esbuild plugin variant for optimizeDeps stage
+function esbuildStripVendorSourcemaps() {
+  const vendorRe = /node_modules\/(?:@walletconnect|@cosmjs|@cosmsnap)\//;
+  const mapLine = /\/\/#\s*sourceMappingURL=.*$/gm;
+  return {
+    name: 'esbuild-strip-vendor-sourcemaps',
+    setup(build: any) {
+      build.onLoad({ filter: /\.(mjs|cjs|js)$/ }, async (args: any) => {
+        if (!vendorRe.test(args.path)) return;
+        const fs = await import('fs/promises');
+        try {
+          const code = await fs.readFile(args.path, 'utf8');
+          if (!mapLine.test(code)) return;
+          const cleaned = code.replace(mapLine, '');
+          return { contents: cleaned, loader: 'js' };
+        } catch {
+          return;
+        }
+      });
+    }
+  }
+}
+
+export default defineConfig({
+  plugins: [react(), nodePolyfills(), stripVendorSourcemaps()],
+  logLevel: 'error',
+  define: { global: 'globalThis' },
+  server: { port: 3000 },
+  optimizeDeps: {
+    exclude: [
+      '@getpara/cosmos-wallet-connectors',
+      '@getpara/solana-wallet-connectors',
+      '@cosmjs/*',
+      '@cosmsnap/*'
+    ],
+    esbuildOptions: {
+      sourcemap: false,
+      plugins: [esbuildStripVendorSourcemaps()]
+    }
+  },
+  build: {
+    sourcemap: false,
+    rollupOptions: {
+      external: [
+        '@getpara/cosmos-wallet-connectors',
+        '@getpara/solana-wallet-connectors',
+        /@cosmjs\//,
+        /@cosmsnap\//
+      ]
+    }
+  }
+})
+
+

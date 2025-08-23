@@ -12,8 +12,6 @@ This directory contains ready-to-use templates for quickly starting new projects
 
    ```bash
    cp -r create-sbc-app/react my-new-sbc-app
-   # or for Next.js:
-   cp -r create-sbc-app/nextjs my-new-sbc-next-app
    ```
 
 2. **Install dependencies:**

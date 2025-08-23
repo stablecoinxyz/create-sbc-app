@@ -1,0 +1,24 @@
+# React + Dynamic + SBC App Kit
+
+Gasless transactions on Base using Dynamic SDK with SBC App Kit.
+
+## Quick Start
+
+```bash
+pnpm install
+pnpm dev
+```
+
+## Environment
+
+Create `.env` from `.env.template` and fill in values:
+
+```env
+VITE_SBC_API_KEY={{apiKey}}
+VITE_DYNAMIC_ENVIRONMENT_ID=your_dynamic_env_id
+# Optional
+VITE_CHAIN=baseSepolia # or "base"
+VITE_RPC_URL=
+```
+
+

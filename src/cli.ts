@@ -13,9 +13,9 @@ const program = new Command();
 program
   .name('create-sbc-app')
   .description('Create a new SBC App Kit project with an opinionated template')
-  .version('0.1.0')
+  .version('0.2.0')
   .argument('[project-directory]', 'Directory to create the new app in')
-  .option('-t, --template <template>', 'Template to use: react, nextjs, or backend')
+  .option('-t, --template <template>', 'Template to use: react, react-dynamic, or react-para')
   .option('--api-key <apiKey>', 'Your SBC API key for immediate configuration')
   .option('--wallet <wallet>', 'Wallet integration (not yet implemented)')
   .addHelpText('after', `
@@ -25,8 +25,9 @@ Examples:
   $ create-sbc-app my-app --template react --api-key your-api-key
 
 Available Templates:
-  - react    React + Vite template with SBC integration
-  - nextjs   Next.js template with SBC integration (coming soon)
+  - react           React + Vite template with SBC integration
+  - react-dynamic   React + Vite with Dynamic wallet integration
+  - react-para      React + Vite with Para wallet integration
 `)
   .action(async (dir, options) => {
     if (options.wallet) {
@@ -36,7 +37,8 @@ Available Templates:
 
     const templateChoices = [
       { title: 'React', value: 'react' },
-      { title: 'Next.js', value: 'nextjs' }
+      { title: 'React (Dynamic wallet)', value: 'react-dynamic' },
+      { title: 'React (Para wallet)', value: 'react-para' }
     ];
 
     // Use provided argument or prompt for project directory
@@ -55,7 +57,7 @@ Available Templates:
     }
 
     // Use provided option or prompt for template
-    let template = options.template && ['react', 'nextjs'].includes(options.template) ? options.template : '';
+    let template = options.template && ['react', 'react-dynamic', 'react-para'].includes(options.template) ? options.template : '';
     if (!template) {
       const res = await prompts({
         type: 'select',
@@ -68,7 +70,7 @@ Available Templates:
         process.exit(1);
       }
       template = res.template; // The value is already what we want from the choices
-      if (!template || !['react', 'nextjs'].includes(template)) {
+      if (!template || !['react', 'react-dynamic', 'react-para'].includes(template)) {
         console.log('Template selection is required.');
         process.exit(1);
       }
@@ -107,6 +109,27 @@ Available Templates:
       chain: 'baseSepolia',
       apiKey: apiKey
     });
+
+    // Ensure SBC logo exists in public/ for all templates
+    try {
+      const publicDir = path.join(targetDir, 'public');
+      await fs.ensureDir(publicDir);
+      const sourceLogo = path.resolve(__dirname, '../templates/react/public/sbc-logo.png');
+      const destLogo = path.join(publicDir, 'sbc-logo.png');
+      if (!(await fs.pathExists(destLogo)) && (await fs.pathExists(sourceLogo))) {
+        await fs.copy(sourceLogo, destLogo);
+      }
+    } catch {}
+
+    // If .env.template exists, ensure apiKey placeholder is applied (copyTemplate already replaces)
+    // Also, create a default .env if none exists to make onboarding faster
+    try {
+      const envTemplatePath = path.join(targetDir, '.env.template');
+      const envPath = path.join(targetDir, '.env');
+      if (await fs.pathExists(envTemplatePath) && !(await fs.pathExists(envPath))) {
+        await fs.copy(envTemplatePath, envPath);
+      }
+    } catch {}
 
     console.log(`\nSuccess! Created ${projectDir} using the ${template} template.`);
     console.log(`\nNext steps:`);

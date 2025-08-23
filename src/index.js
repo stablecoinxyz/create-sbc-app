@@ -37,7 +37,6 @@ async function createApp(projectName, options) {
       name: 'template',
       message: 'Which template would you like to use?',
       choices: [
-        { name: 'Next.js (Recommended)', value: 'nextjs' },
         { name: 'React', value: 'react' },
         { name: 'Vanilla JavaScript', value: 'vanilla' }
       ],
@@ -137,9 +136,6 @@ async function scaffoldProject(config) {
       if (template === 'react') {
         console.log(chalk.cyan('   # Edit the .env file and replace the API key:'));
         console.log(chalk.cyan('   VITE_SBC_API_KEY=your_real_api_key_here'));
-      } else if (template === 'nextjs') {
-        console.log(chalk.cyan('   # Edit the .env.local file and replace the API key:'));
-        console.log(chalk.cyan('   SBC_API_KEY=your_real_api_key_here'));
       } else {
         console.log(chalk.cyan('   # Check your project files for API key configuration'));
       }
@@ -166,8 +162,6 @@ async function scaffoldProject(config) {
       console.log('   • Modern Vite + TypeScript setup');
       console.log();
       console.log('💡 After connecting your wallet, try the "Send Gasless TX" button!');
-    } else if (template === 'nextjs') {
-      console.log('🚀 Your Next.js app is ready with SBC integration!');
     } else {
       console.log('🚀 Your vanilla app is ready with SBC integration!');
     }

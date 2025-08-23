@@ -1,0 +1,24 @@
+# React + Para + SBC App Kit
+
+Gasless user operation using EIP-2612 permit signed via Para and executed via SBC App Kit.
+
+## Quick Start
+
+```bash
+pnpm install
+pnpm dev
+```
+
+## Environment
+
+Create `.env` from `.env.template`:
+
+```env
+VITE_SBC_API_KEY={{apiKey}}
+VITE_PARA_API_KEY=your_para_api_key
+# Optional
+VITE_CHAIN=baseSepolia # or "base"
+VITE_RPC_URL=
+```
+
+

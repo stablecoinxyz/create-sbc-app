@@ -33,7 +33,7 @@ Arguments:
 
 Options:
   -V, --version           output the version number
-  -t, --template <type>   Template to use: react, nextjs, or backend
+  -t, --template <type>   Template to use: react, react-dynamic, or react-para
   --api-key <apiKey>      Your SBC API key for immediate configuration
   --wallet <wallet>       Wallet integration (not yet implemented)
   -h, --help             display help for command
@@ -41,11 +41,14 @@ Options:
 Examples:
   $ create-sbc-app my-app
   $ create-sbc-app my-app --template react
-  $ create-sbc-app my-app --template react --api-key your-api-key
+  $ create-sbc-app my-app --template react-dynamic
+  $ create-sbc-app my-app --template react-para
+  # Next.js template removed for now
 
 Available Templates:
-  - react    React + Vite template with SBC integration
-  - nextjs   Next.js template with SBC integration (coming soon)
+  - react           React + Vite template with SBC integration
+  - react-dynamic   React + Vite with Dynamic wallet integration
+  - react-para      React + Vite with Para wallet integration
 ```
 
 ## ✨ Features
