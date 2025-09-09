@@ -24,7 +24,7 @@ pnpm dev # or npm run dev
 ## CLI Options
 
 ```bash
-Usage: create-sbc-app [project-directory] [options]
+Usage: npx create-sbc-app [project-directory] [options]
 
 Create a new SBC App Kit project with an opinionated template
 
@@ -39,10 +39,10 @@ Options:
   -h, --help             display help for command
 
 Examples:
-  $ create-sbc-app my-app
-  $ create-sbc-app my-app --template react
-  $ create-sbc-app my-app --template react-dynamic
-  $ create-sbc-app my-app --template react-para
+  $ npx create-sbc-app my-app
+  $ npx create-sbc-app my-app --template react
+  $ npx create-sbc-app my-app --template react-dynamic
+  $ npx create-sbc-app my-app --template react-para
   # Next.js template removed for now
 
 Available Templates:
