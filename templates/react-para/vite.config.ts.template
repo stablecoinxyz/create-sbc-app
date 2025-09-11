@@ -43,7 +43,6 @@ function esbuildStripVendorSourcemaps() {
 
 export default defineConfig({
   plugins: [react(), nodePolyfills(), stripVendorSourcemaps()],
-  logLevel: 'error',
   define: { global: 'globalThis' },
   server: { port: 3000 },
   optimizeDeps: {
