@@ -34,21 +34,26 @@ Arguments:
 Options:
   -V, --version           output the version number
   -t, --template <type>   Template to use: react, react-dynamic, or react-para
+  -c, --chain <chain>     Chain to use: baseSepolia, base, or radiusTestnet
   --api-key <apiKey>      Your SBC API key for immediate configuration
   --wallet <wallet>       Wallet integration (not yet implemented)
   -h, --help             display help for command
 
 Examples:
   $ npx create-sbc-app my-app
-  $ npx create-sbc-app my-app --template react
-  $ npx create-sbc-app my-app --template react-dynamic
-  $ npx create-sbc-app my-app --template react-para
-  # Next.js template removed for now
+  $ npx create-sbc-app my-app --template react --chain radiusTestnet
+  $ npx create-sbc-app my-app --template react-dynamic --chain base
+  $ npx create-sbc-app my-app --template react-para --api-key your-key
 
 Available Templates:
   - react           React + Vite template with SBC integration
   - react-dynamic   React + Vite with Dynamic wallet integration
   - react-para      React + Vite with Para wallet integration
+
+Available Chains:
+  - baseSepolia     Base Sepolia testnet (default)
+  - base            Base mainnet
+  - radiusTestnet   Radius testnet
 ```
 
 ## ✨ Features
@@ -108,7 +113,8 @@ The template includes comprehensive environment configuration:
 ```bash
 # Your SBC API key (get from SBC dashboard)
 VITE_SBC_API_KEY=your_api_key_here
-# "base" or "baseSepolia"
+
+# Supported chains: "baseSepolia" | "base" | "radiusTestnet"
 VITE_CHAIN="baseSepolia"
 ```
 
@@ -139,8 +145,8 @@ cp .env.template .env
 
 # then ensure your .env has the environment variables set up
 
-# "base" or "baseSepolia"
-VITE_CHAIN="baseSepolia" 
+# Supported chains: "baseSepolia" | "base" | "radiusTestnet"
+VITE_CHAIN="baseSepolia"
 # Custom RPC URL (optional) - e.g. get one from Alchemey at https://dashboard.alchemy.com/apps
 VITE_RPC_URL=
 # Get your SBC API Key at https://dashboard.stablecoin.xyz

@@ -13,18 +13,24 @@ program
     .version('0.2.0')
     .argument('[project-directory]', 'Directory to create the new app in')
     .option('-t, --template <template>', 'Template to use: react, react-dynamic, or react-para')
+    .option('-c, --chain <chain>', 'Chain to use: baseSepolia, base, or radiusTestnet')
     .option('--api-key <apiKey>', 'Your SBC API key for immediate configuration')
     .option('--wallet <wallet>', 'Wallet integration (not yet implemented)')
     .addHelpText('after', `
 Examples:
   $ create-sbc-app my-app
-  $ create-sbc-app my-app --template react
+  $ create-sbc-app my-app --template react --chain radiusTestnet
   $ create-sbc-app my-app --template react --api-key your-api-key
 
 Available Templates:
   - react           React + Vite template with SBC integration
   - react-dynamic   React + Vite with Dynamic wallet integration
   - react-para      React + Vite with Para wallet integration
+
+Available Chains:
+  - baseSepolia     Base Sepolia testnet (default)
+  - base            Base mainnet
+  - radiusTestnet   Radius testnet
 `)
     .action(async (dir, options) => {
     if (options.wallet) {
@@ -35,6 +41,11 @@ Available Templates:
         { title: 'React', value: 'react' },
         { title: 'React (Dynamic wallet)', value: 'react-dynamic' },
         { title: 'React (Para wallet)', value: 'react-para' }
+    ];
+    const chainChoices = [
+        { title: 'Base Sepolia (testnet)', value: 'baseSepolia' },
+        { title: 'Base (mainnet)', value: 'base' },
+        { title: 'Radius Testnet', value: 'radiusTestnet' }
     ];
     // Use provided argument or prompt for project directory
     let projectDir = dir && dir.trim() ? dir.trim() : '';
@@ -69,6 +80,26 @@ Available Templates:
             process.exit(1);
         }
     }
+    // Use provided option or prompt for chain
+    let chain = options.chain && ['baseSepolia', 'base', 'radiusTestnet'].includes(options.chain) ? options.chain : '';
+    if (!chain) {
+        const res = await prompts({
+            type: 'select',
+            name: 'chain',
+            message: 'Which chain?',
+            choices: chainChoices,
+            initial: 0
+        });
+        if (res.chain === undefined) {
+            console.log('Chain selection is required.');
+            process.exit(1);
+        }
+        chain = res.chain;
+        if (!chain || !['baseSepolia', 'base', 'radiusTestnet'].includes(chain)) {
+            console.log('Chain selection is required.');
+            process.exit(1);
+        }
+    }
     // Use provided option or prompt for API key
     let apiKey = options.apiKey && options.apiKey.trim() ? options.apiKey.trim() : '';
     if (!apiKey) {
@@ -96,7 +127,7 @@ Available Templates:
     }
     await copyTemplate(templateDir, targetDir, {
         projectName: projectDir,
-        chain: 'baseSepolia',
+        chain: chain,
         apiKey: apiKey
     });
     // Ensure SBC logo exists in public/ for all templates

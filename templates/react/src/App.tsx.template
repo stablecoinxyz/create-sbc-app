@@ -1,19 +1,32 @@
 import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import { SbcProvider, WalletButton, useSbcApp, useUserOperation } from '@stablecoin.xyz/react';
+import { radiusTestnet, TestSBC_CONTRACT_ADDRESS } from '@stablecoin.xyz/core';
 import { base, baseSepolia } from 'viem/chains';
 import { createPublicClient, http, getAddress, parseSignature, WalletClient, PublicClient } from 'viem';
 import { parseUnits, encodeFunctionData, erc20Abi } from 'viem';
 import './App.css';
 
 // Chain selection helpers
-const chain = (import.meta.env.VITE_CHAIN === 'base') ? base : baseSepolia;
+const getChain = () => {
+  const chainEnv = import.meta.env.VITE_CHAIN;
+  if (chainEnv === 'base') return base;
+  if (chainEnv === 'radiusTestnet') return radiusTestnet;
+  return baseSepolia;
+};
+
+const chain = getChain();
 const rpcUrl = import.meta.env.VITE_RPC_URL;
+
+// Radius testnet uses TestSBC (a test token for development)
+const TEST_SBC_DECIMALS = 6;
 
 const SBC_TOKEN_ADDRESS = (chain) => {
   if (chain.id === baseSepolia.id) {
     return '0xf9FB20B8E097904f0aB7d12e9DbeE88f2dcd0F16';
   } else if (chain.id === base.id) {
     return '0xfdcC3dd6671eaB0709A4C0f3F53De9a333d80798';
+  } else if (chain.id === radiusTestnet.id) {
+    return TestSBC_CONTRACT_ADDRESS;
   }
   throw new Error('Unsupported chain');
 };
@@ -23,8 +36,17 @@ const SBC_DECIMALS = (chain) => {
     return 6;
   } else if (chain.id === base.id) {
     return 18;
+  } else if (chain.id === radiusTestnet.id) {
+    return TEST_SBC_DECIMALS;
   }
   throw new Error('Unsupported chain');
+};
+
+const getTokenSymbol = (chain) => {
+  if (chain.id === radiusTestnet.id) {
+    return 'TestSBC';
+  }
+  return 'SBC';
 };
 
 const chainExplorer = (chain) => {
@@ -32,6 +54,8 @@ const chainExplorer = (chain) => {
     return 'https://sepolia.basescan.org';
   } else if (chain.id === base.id) {
     return 'https://basescan.org';
+  } else if (chain.id === radiusTestnet.id) {
+    return 'https://testnet.radiustech.xyz/testnet/explorer';
   }
   throw new Error('Unsupported chain');
 };
@@ -73,6 +97,54 @@ const permitAbi = [
 
 function WalletStatus({ onDisconnect }: { onDisconnect: () => void }) {
   const { ownerAddress } = useSbcApp();
+  const [eoaBalances, setEoaBalances] = useState<{ eth: string | null; sbc: string | null }>({ eth: null, sbc: null });
+  const [isLoadingEoaBalances, setIsLoadingEoaBalances] = useState(false);
+
+  // Fetch ETH and TestSBC balances for EOA wallet
+  useEffect(() => {
+    if (!ownerAddress) return;
+
+    const fetchEoaBalances = async () => {
+      setIsLoadingEoaBalances(true);
+      try {
+        const [ethBalance, sbcBalance] = await Promise.all([
+          publicClient.getBalance({ address: ownerAddress as `0x${string}` }),
+          publicClient.readContract({
+            address: SBC_TOKEN_ADDRESS(chain) as `0x${string}`,
+            abi: erc20Abi,
+            functionName: 'balanceOf',
+            args: [ownerAddress as `0x${string}`],
+          })
+        ]);
+        setEoaBalances({ eth: ethBalance.toString(), sbc: (sbcBalance as bigint).toString() });
+      } catch (error) {
+        console.error('Failed to fetch EOA balances:', error);
+        setEoaBalances({ eth: '0', sbc: '0' });
+      } finally {
+        setIsLoadingEoaBalances(false);
+      }
+    };
+
+    fetchEoaBalances();
+  }, [ownerAddress]);
+
+  const formatEthBalance = (balance: string | null): string => {
+    if (!balance) return '0.0000';
+    try {
+      return (Number(balance) / 1e18).toFixed(4);
+    } catch {
+      return '0.0000';
+    }
+  };
+
+  const formatSbcBalance = (balance: string | null): string => {
+    if (!balance) return '0.00';
+    try {
+      return (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(2);
+    } catch {
+      return '0.00';
+    }
+  };
 
   if (!ownerAddress) return null;
 
@@ -93,6 +165,18 @@ function WalletStatus({ onDisconnect }: { onDisconnect: () => void }) {
       <div className="info-row">
         <label>Chain:</label>
         <div className="value">{chain.name}</div>
+      </div>
+      <div className="info-row">
+        <label>EOA ETH Balance:</label>
+        <div className="value">
+          {isLoadingEoaBalances ? 'Loading...' : `${formatEthBalance(eoaBalances.eth)} ETH`}
+        </div>
+      </div>
+      <div className="info-row">
+        <label>EOA {getTokenSymbol(chain)} Balance:</label>
+        <div className="value">
+          {isLoadingEoaBalances ? 'Loading...' : `${formatSbcBalance(eoaBalances.sbc)} ${getTokenSymbol(chain)}`}
+        </div>
       </div>
     </div>
   );
@@ -207,9 +291,9 @@ function SmartAccountInfo() {
         <div className="value">{formatEthBalance(account.balance)} ETH</div>
       </div>
       <div className="info-row">
-        <label>SBC Balance:</label>
+        <label>{getTokenSymbol(chain)} Balance:</label>
         <div className="value">
-          {isLoadingBalance ? 'Loading...' : `${formatSbcBalance(sbcBalance)} SBC`}
+          {isLoadingBalance ? 'Loading...' : `${formatSbcBalance(sbcBalance)} ${getTokenSymbol(chain)}`}
         </div>
       </div>
     </div>
@@ -229,7 +313,7 @@ function SendSBCForm() {
     try {
       const ownerChecksum = getAddress(ownerAddress);
       const spenderChecksum = getAddress(account.address);
-      const value = parseUnits('1', SBC_DECIMALS(chain)); // Send 1 SBC
+      const value = parseUnits('1', SBC_DECIMALS(chain)); // Send 1 token
       const deadline = Math.floor(Date.now() / 1000) + 60 * 30; // 30 min
       
       const signature = await getPermitSignature({
@@ -275,7 +359,7 @@ function SendSBCForm() {
 
   return (
     <div className="card">
-      <h3>💸 Send 1 SBC Token</h3>
+      <h3>💸 Send 1 {getTokenSymbol(chain)} Token</h3>
       <div className="form-group">
         <label>Recipient Address</label>
         <input
@@ -289,11 +373,11 @@ function SendSBCForm() {
           <span className="error-text">Invalid Ethereum address</span>
         )}
       </div>
-      
+
       <div className="status-section">
         <div className="info-row">
           <label>Amount:</label>
-          <div className="value">1.00 SBC</div>
+          <div className="value">1.00 {getTokenSymbol(chain)}</div>
         </div>
         <div className="info-row">
           <label>Gas fees:</label>
@@ -310,18 +394,18 @@ function SendSBCForm() {
         disabled={!isFormValid || isLoading || !account}
         className="primary"
       >
-        {isLoading ? 'Waiting for signature...' : 'Send 1 SBC'}
+        {isLoading ? 'Waiting for signature...' : `Send 1 ${getTokenSymbol(chain)}`}
       </button>
 
       {isSuccess && data && (
         <div className="success-message">
           <p>✅ Transaction Successful!</p>
-          <a 
+          <a
             href={`${chainExplorer(chain)}/tx/${data.transactionHash}`}
             target="_blank"
             rel="noopener noreferrer"
           >
-            View on BaseScan: {data.transactionHash}
+            View transaction: {data.transactionHash}
           </a>
         </div>
       )}

@@ -2,25 +2,48 @@ import { DynamicContextProvider, useDynamicContext, DynamicUserProfile, DynamicW
 import { EthereumWalletConnectors } from '@dynamic-labs/ethereum';
 import { ZeroDevSmartWalletConnectors } from '@dynamic-labs/ethereum-aa';
 import { useSbcDynamic } from '@stablecoin.xyz/react';
+import { radiusTestnet, TestSBC_CONTRACT_ADDRESS } from '@stablecoin.xyz/core';
 import { baseSepolia, base, type Chain } from 'viem/chains';
 import { createPublicClient, http, getAddress, parseUnits, encodeFunctionData, erc20Abi } from 'viem';
 import { useEffect, useState } from 'react';
 import './App.css';
 
-const chain = (import.meta.env.VITE_CHAIN === 'base') ? base : baseSepolia;
+const getChain = () => {
+  const chainEnv = import.meta.env.VITE_CHAIN;
+  if (chainEnv === 'base') return base;
+  if (chainEnv === 'radiusTestnet') return radiusTestnet;
+  return baseSepolia;
+};
+
+const chain = getChain();
 const rpcUrl = import.meta.env.VITE_RPC_URL;
+
+// Radius testnet uses TestSBC (a test token for development)
+const TEST_SBC_DECIMALS = 6;
 
 const SBC_TOKEN_ADDRESS = (chain: Chain) => {
   if (chain.id === baseSepolia.id) return '0xf9FB20B8E097904f0aB7d12e9DbeE88f2dcd0F16';
   if (chain.id === base.id) return '0xfdcC3dd6671eaB0709A4C0f3F53De9a333d80798';
+  if (chain.id === radiusTestnet.id) return TestSBC_CONTRACT_ADDRESS;
   throw new Error('Unsupported chain');
 };
 
-const SBC_DECIMALS = (chain: Chain) => chain.id === baseSepolia.id ? 6 : 18;
+const SBC_DECIMALS = (chain: Chain) => {
+  if (chain.id === baseSepolia.id) return 6;
+  if (chain.id === base.id) return 18;
+  if (chain.id === radiusTestnet.id) return TEST_SBC_DECIMALS;
+  throw new Error('Unsupported chain');
+};
+
+const getTokenSymbol = (chain: Chain) => {
+  if (chain.id === radiusTestnet.id) return 'TestSBC';
+  return 'SBC';
+};
 
 const chainExplorer = (chain: Chain) => {
   if (chain.id === baseSepolia.id) return 'https://sepolia.basescan.org';
   if (chain.id === base.id) return 'https://basescan.org';
+  if (chain.id === radiusTestnet.id) return 'https://testnet.radiustech.xyz/testnet/explorer';
   return '';
 };
 
@@ -74,7 +97,8 @@ function WalletStatus() {
           })
         ]);
         setBalances({ eth: ethBalance.toString(), sbc: (sbcBalance as bigint).toString() });
-      } catch {
+      } catch (error) {
+        console.error('Failed to fetch EOA balances:', error);
         setBalances({ eth: null, sbc: null });
       }
     })();
@@ -93,10 +117,10 @@ function WalletStatus() {
           <p className="text-xs text-green-600 mb-2">Connected via Dynamic SDK</p>
           <p className="text-xs text-green-600 mb-2"><strong>Chain:</strong> {chain.name} (ID: {chain.id})</p>
           <div className="mt-2 pt-2 border-t border-green-200">
-            <p className="text-xs font-medium text-green-700 mb-1">Wallet Balances:</p>
+            <p className="text-xs font-medium text-green-700 mb-1">EOA Wallet Balances:</p>
             <div className="flex gap-4">
               <span className="text-xs text-green-600"><strong>ETH:</strong> {fmtEth(balances.eth)}</span>
-              <span className="text-xs text-green-600"><strong>SBC:</strong> {fmtSbc(balances.sbc)}</span>
+              <span className="text-xs text-green-600"><strong>{getTokenSymbol(chain)}:</strong> {fmtSbc(balances.sbc)}</span>
             </div>
           </div>
         </div>
@@ -118,7 +142,10 @@ function SmartAccountInfo({ account, refreshAccount, isLoadingAccount, accountEr
           args: [account.address as `0x${string}`],
         });
         setSbcBalance((bal as bigint).toString());
-      } catch { setSbcBalance('0'); }
+      } catch (error) {
+        console.error('Failed to fetch smart account SBC balance:', error);
+        setSbcBalance('0');
+      }
     })();
   }, [account?.address]);
 
@@ -136,13 +163,8 @@ function SmartAccountInfo({ account, refreshAccount, isLoadingAccount, accountEr
         <div className="flex justify-between"><span className="text-purple-700">Smart Account Address:</span><span className="font-mono text-xs text-purple-600 break-all">{account.address}</span></div>
         <div className="flex justify-between"><span className="text-purple-700">Deployed:</span><span className="text-purple-600">{account.isDeployed ? '✅ Yes' : '⏳ On first transaction'}</span></div>
         <div className="flex justify-between"><span className="text-purple-700">Nonce:</span><span className="text-purple-600">{account.nonce}</span></div>
-        <div className="pt-2 border-t border-purple-200">
-          <p className="text-xs font-medium text-purple-700 mb-2">Smart Account Balances:</p>
-          <div className="space-y-1">
-            <div className="flex justify-between"><span className="text-purple-700">ETH:</span><span className="text-purple-600 font-mono text-xs">{fmtEth(account.balance)} ETH</span></div>
-            <div className="flex justify-between"><span className="text-purple-700">SBC:</span><span className="text-purple-600 font-mono text-xs">{fmtSbc(sbcBalance)} SBC</span></div>
-          </div>
-        </div>
+        <div className="flex justify-between"><span className="text-purple-700">ETH Balance:</span><span className="text-purple-600 font-mono text-xs">{fmtEth(account.balance)} ETH</span></div>
+        <div className="flex justify-between"><span className="text-purple-700">{getTokenSymbol(chain)} Balance:</span><span className="text-purple-600 font-mono text-xs">{fmtSbc(sbcBalance)} {getTokenSymbol(chain)}</span></div>
       </div>
       {accountError && <p className="mt-2 text-xs text-red-600">{String(accountError)}</p>}
     </div>
@@ -216,29 +238,29 @@ function TransactionForm({ account, sbcAppKit }: { account: any; sbcAppKit: any 
 
   return (
     <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
-      <h3 className="font-semibold text-gray-800 mb-4">💸 Send SBC Tokens</h3>
+      <h3 className="font-semibold text-gray-800 mb-4">💸 Send {getTokenSymbol(chain)} Tokens</h3>
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Recipient Address</label>
           <input type="text" value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="0x..." className="w-full px-3 py-2 text-xs font-mono border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Amount (SBC)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Amount ({getTokenSymbol(chain)})</label>
           <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="1.0" step="0.000001" min="0" className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300" />
         </div>
         <div className="p-3 bg-gray-50 rounded">
-          <div className="flex justify-between text-sm"><span>Amount:</span><span className="font-medium">{amount} SBC</span></div>
+          <div className="flex justify-between text-sm"><span>Amount:</span><span className="font-medium">{amount} {getTokenSymbol(chain)}</span></div>
           <div className="flex justify-between text-xs text-gray-600"><span>Gas fees:</span><span>Covered by SBC Paymaster ✨</span></div>
           <div className="flex justify-between text-xs text-gray-600"><span>Signing:</span><span>Your Dynamic wallet will prompt to sign 🖊️</span></div>
         </div>
         <button onClick={sendTx} disabled={!isValid || status==='loading' || !account} className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-          {status==='loading' ? 'Waiting for signature...' : `Send ${amount} SBC`}
+          {status==='loading' ? 'Waiting for signature...' : `Send ${amount} ${getTokenSymbol(chain)}`}
         </button>
         {status==='success' && result && (
           <div className="p-3 bg-green-50 border border-green-200 rounded">
             <p className="text-sm text-green-800 font-medium">✅ Transaction Submitted</p>
             <p className="text-xs text-green-600 font-mono break-all mt-1">
-              <a href={`${chainExplorer(chain)}/tx/${result.transactionHash}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View on BaseScan: {result.transactionHash}</a>
+              <a href={`${chainExplorer(chain)}/tx/${result.transactionHash}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View transaction: {result.transactionHash}</a>
             </p>
           </div>
         )}
