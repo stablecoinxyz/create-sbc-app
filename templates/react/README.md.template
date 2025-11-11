@@ -18,12 +18,12 @@ cp .env.example .env # Optional: for local overrides
 
 Edit `.env` and add your SBC API key and Chain, with the optional for a custom RPC:
 ```bash
-# "base" or "baseSepolia"
-VITE_CHAIN="baseSepolia" 
-# Custom RPC URL (optional) - e.g. get one from Alchemey at https://dashboard.alchemy.com/apps
+# Supported chains: "baseSepolia" | "base" | "radiusTestnet"
+VITE_CHAIN={{chain}}
+# Custom RPC URL (optional) - e.g. get one from Alchemy at https://dashboard.alchemy.com/apps
 VITE_RPC_URL=
 # Get your SBC API Key at https://dashboard.stablecoin.xyz
-VITE_SBC_API_KEY=
+VITE_SBC_API_KEY={{apiKey}}
 ```
 
 > **Get your API key:** Visit the [SBC Dashboard](https://dashboard.stablecoin.xyz) to create an account and get your API key.
@@ -108,13 +108,12 @@ This app is configured for **{{chain}}**. To use a different chain:
 
 1. Update `.env`:
    ```bash
-   VITE_SBC_CHAIN=your_chain_here
+   VITE_CHAIN=base          # Base mainnet
+   VITE_CHAIN=baseSepolia   # Base Sepolia testnet
+   VITE_CHAIN=radiusTestnet # Radius testnet
    ```
 
-2. Update the import in `App.tsx`:
-   ```typescript
-   import { yourChain } from 'viem/chains';
-   ```
+2. Restart your development server after changing the chain
 
 ## 📖 Learn More
 

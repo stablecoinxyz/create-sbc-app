@@ -1,24 +1,165 @@
-# React + Para + SBC App Kit
+# {{projectName}}
 
-Gasless user operation using EIP-2612 permit signed via Para and executed via SBC App Kit.
+React + Vite app with Para wallet integration and SBC App Kit for advanced gasless transactions using EIP-2612 permits.
+
+## Overview
+
+This template combines:
+- **Para** - Advanced wallet integration with EIP-2612 permit support
+- **SBC App Kit** - Account abstraction and gasless transactions
+- **React + Vite** - Fast, modern development experience
+
+Perfect for applications that need advanced gasless transaction patterns using EIP-2612 permit signatures, enabling token approvals without separate transactions.
+
+## What are EIP-2612 Permits?
+
+EIP-2612 permits allow users to sign approval messages off-chain, eliminating the need for a separate approval transaction. This creates a superior user experience:
+- No approval transaction fees
+- Single-step token operations
+- Enhanced security through time-limited permits
+- Better UX for DeFi interactions
 
 ## Quick Start
 
-```bash
-pnpm install
-pnpm dev
-```
+1. **Install dependencies:**
 
-## Environment
+   ```bash
+   pnpm install
+   # or
+   npm install
+   ```
 
-Create `.env` from `.env.template`:
+2. **Configure environment:**
 
+   Copy `.env.template` to `.env` and fill in your API keys:
+
+   ```env
+   # Your SBC API key from https://dashboard.stablecoin.xyz
+   VITE_SBC_API_KEY={{apiKey}}
+
+   # Your Para API key
+   VITE_PARA_API_KEY=your_para_api_key
+
+   # Supported chains: "baseSepolia" | "base"
+   VITE_CHAIN={{chain}}
+
+   # Optional: Custom RPC URL (e.g., from Alchemy)
+   VITE_RPC_URL=
+   ```
+
+3. **Start the development server:**
+
+   ```bash
+   pnpm dev
+   # or
+   npm run dev
+   ```
+
+4. **Open your browser:**
+   Visit [http://localhost:5173](http://localhost:5173) (or the port shown in your terminal).
+
+## Features
+
+### Para Wallet Integration
+- EIP-2612 permit signature support
+- Gasless token approvals
+- Advanced transaction patterns
+- Seamless wallet experience
+- Optimized for DeFi applications
+
+### SBC App Kit Integration
+- Automatic smart account creation
+- Gasless transactions
+- Gas estimation and previews
+- Batch transactions
+- Real-time balance tracking
+- Transaction history
+
+### Advanced Use Cases
+- Single-step token swaps (no separate approval)
+- Gasless staking operations
+- Permit-based token transfers
+- Enhanced DeFi interactions
+- Meta-transactions with permits
+
+### Developer Experience
+- TypeScript support with full type safety
+- Hot module replacement for fast development
+- Environment-based configuration
+- Comprehensive error handling
+- Debug logging
+
+## Getting Your API Keys
+
+### SBC API Key
+1. Visit [https://dashboard.stablecoin.xyz](https://dashboard.stablecoin.xyz)
+2. Sign up or log in
+3. Create a new API key
+4. Add it to your `.env` file as `VITE_SBC_API_KEY`
+
+### Para API Key
+1. Visit [https://para.xyz](https://para.xyz)
+2. Create an account and register your application
+3. Copy your API key
+4. Add it to your `.env` file as `VITE_PARA_API_KEY`
+
+## Customization
+
+### Styling
+- Edit `src/App.css` for component styles
+- Edit `src/index.css` for global styles
+- Customize Tailwind configuration in `tailwind.config.js`
+
+### Chain Configuration
+Change the chain in your `.env` file:
 ```env
-VITE_SBC_API_KEY={{apiKey}}
-VITE_PARA_API_KEY=your_para_api_key
-# Optional
-VITE_CHAIN=baseSepolia # or "base"
-VITE_RPC_URL=
+VITE_CHAIN=base          # Base mainnet
+VITE_CHAIN=baseSepolia   # Base Sepolia testnet
 ```
 
+**Note:** Radius Testnet is not currently supported by the Para wallet provider. Use the base `react` template for Radius Testnet support.
 
+### Permit Configuration
+Customize permit parameters in your application logic:
+- Deadline (expiration time)
+- Spender address
+- Token amounts
+
+## Building for Production
+
+```bash
+pnpm build
+# or
+npm run build
+```
+
+The built files will be in the `dist/` directory, ready for deployment to any static host (Vercel, Netlify, Cloudflare Pages, etc.).
+
+## Use Cases
+
+This template is ideal for:
+- DeFi applications requiring token approvals
+- DEX interfaces with optimized UX
+- Staking platforms
+- Lending/borrowing protocols
+- Any application benefiting from gasless approvals
+
+## Learn More
+
+- [SBC Documentation](https://docs.stablecoin.xyz)
+- [Para Documentation](https://docs.para.xyz)
+- [EIP-2612 Specification](https://eips.ethereum.org/EIPS/eip-2612)
+- [SBC App Kit GitHub](https://github.com/stablecoinxyz/app-kit)
+- [React Documentation](https://react.dev)
+- [Vite Documentation](https://vitejs.dev)
+
+## Support
+
+If you encounter any issues:
+1. Check the [SBC Documentation](https://docs.stablecoin.xyz)
+2. Review the [Para Documentation](https://docs.para.xyz)
+3. Open an issue on the [SBC App Kit repository](https://github.com/stablecoinxyz/app-kit/issues)
+
+## License
+
+MIT

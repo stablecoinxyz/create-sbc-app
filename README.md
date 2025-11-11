@@ -53,7 +53,7 @@ Available Templates:
 Available Chains:
   - baseSepolia     Base Sepolia testnet (default)
   - base            Base mainnet
-  - radiusTestnet   Radius testnet
+  - radiusTestnet   Radius testnet (react template only)
 ```
 
 ## ✨ Features
@@ -86,7 +86,9 @@ The React template includes comprehensive, production-ready examples:
 - **Hot Reload** - Fast development iteration
 - **Production Ready** - Optimized builds and deployment preparation
 
-## 🚀 React Template
+## 🚀 Templates
+
+### React Template (Default)
 
 **Best for:** Client-side applications, rapid prototyping, and production use
 
@@ -94,13 +96,51 @@ The React template includes comprehensive, production-ready examples:
 npx create-sbc-app my-app
 ```
 
-**Features:**
+**Supported Chains:** Base Sepolia, Base, Radius Testnet
 
+**Features:**
 - Fast development setup
 - Hot module replacement
+- Direct wallet connection (MetaMask, Coinbase, WalletConnect)
 - Built-in testing framework
 - Easy deployment to static hosts
 - Modern React patterns and hooks
+
+### React + Dynamic Template
+
+**Best for:** Applications requiring embedded wallets with social logins
+
+```bash
+npx create-sbc-app my-app --template react-dynamic
+```
+
+**Supported Chains:** Base Sepolia, Base (Radius Testnet not supported)
+
+**Features:**
+- Dynamic SDK integration for embedded wallets
+- Social login support (Google, Twitter, Discord, etc.)
+- Email/SMS wallet creation
+- All standard SBC features
+
+**Additional Requirements:** Dynamic Environment ID from [Dynamic Dashboard](https://app.dynamic.xyz/)
+
+### React + Para Template
+
+**Best for:** DeFi applications leveraging EIP-2612 permits
+
+```bash
+npx create-sbc-app my-app --template react-para
+```
+
+**Supported Chains:** Base Sepolia, Base (Radius Testnet not supported)
+
+**Features:**
+- Para wallet integration
+- EIP-2612 permit signatures
+- Gasless token approvals
+- All standard SBC features
+
+**Additional Requirements:** Para API Key from [Para](https://para.xyz/)
 
 ## 📝 Configuration
 
@@ -147,7 +187,7 @@ cp .env.template .env
 
 # Supported chains: "baseSepolia" | "base" | "radiusTestnet"
 VITE_CHAIN="baseSepolia"
-# Custom RPC URL (optional) - e.g. get one from Alchemey at https://dashboard.alchemy.com/apps
+# Custom RPC URL (optional) - e.g. get one from Alchemy at https://dashboard.alchemy.com/apps
 VITE_RPC_URL=
 # Get your SBC API Key at https://dashboard.stablecoin.xyz
 VITE_SBC_API_KEY=

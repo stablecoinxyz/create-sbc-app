@@ -1,24 +1,142 @@
-# React + Dynamic + SBC App Kit
+# {{projectName}}
 
-Gasless transactions on Base using Dynamic SDK with SBC App Kit.
+React + Vite app with Dynamic wallet integration and SBC App Kit for gasless transactions.
+
+## Overview
+
+This template combines:
+- **Dynamic SDK** - Embedded wallet with social logins (Google, Twitter, Discord, email, SMS)
+- **SBC App Kit** - Account abstraction and gasless transactions
+- **React + Vite** - Fast, modern development experience
+
+Perfect for applications that need a seamless onboarding experience with social authentication and gasless transactions.
 
 ## Quick Start
 
-```bash
-pnpm install
-pnpm dev
+1. **Install dependencies:**
+
+   ```bash
+   pnpm install
+   # or
+   npm install
+   ```
+
+2. **Configure environment:**
+
+   Copy `.env.template` to `.env` and fill in your API keys:
+
+   ```env
+   # Your SBC API key from https://dashboard.stablecoin.xyz
+   VITE_SBC_API_KEY={{apiKey}}
+
+   # Your Dynamic Environment ID from https://app.dynamic.xyz/
+   VITE_DYNAMIC_ENVIRONMENT_ID=your_dynamic_env_id
+
+   # Supported chains: "baseSepolia" | "base"
+   VITE_CHAIN={{chain}}
+
+   # Optional: Custom RPC URL (e.g., from Alchemy)
+   VITE_RPC_URL=
+   ```
+
+3. **Start the development server:**
+
+   ```bash
+   pnpm dev
+   # or
+   npm run dev
+   ```
+
+4. **Open your browser:**
+   Visit [http://localhost:5173](http://localhost:5173) (or the port shown in your terminal).
+
+## Features
+
+### Dynamic Wallet Integration
+- Social logins (Google, Twitter, Discord, GitHub, Apple, etc.)
+- Email and SMS authentication
+- Embedded wallet creation
+- Multi-chain support
+- Customizable authentication UI
+
+### SBC App Kit Integration
+- Automatic smart account creation
+- Gasless transactions
+- Gas estimation and previews
+- Batch transactions
+- Real-time balance tracking
+- Transaction history
+
+### Developer Experience
+- TypeScript support with full type safety
+- Hot module replacement for fast development
+- Environment-based configuration
+- Comprehensive error handling
+- Debug logging
+
+## Getting Your API Keys
+
+### SBC API Key
+1. Visit [https://dashboard.stablecoin.xyz](https://dashboard.stablecoin.xyz)
+2. Sign up or log in
+3. Create a new API key
+4. Add it to your `.env` file as `VITE_SBC_API_KEY`
+
+### Dynamic Environment ID
+1. Visit [https://app.dynamic.xyz/](https://app.dynamic.xyz/)
+2. Create an account and a new project
+3. Copy your Environment ID
+4. Add it to your `.env` file as `VITE_DYNAMIC_ENVIRONMENT_ID`
+5. Configure your allowed authentication methods in the Dynamic dashboard
+
+## Customization
+
+### Modifying Authentication Methods
+Edit the Dynamic configuration in `src/App.tsx`:
+```typescript
+// Configure which authentication methods to enable
+walletConnectors={[EthereumWalletConnectors]}
 ```
 
-## Environment
+### Styling
+- Edit `src/App.css` for component styles
+- Edit `src/index.css` for global styles
+- Customize Tailwind configuration in `tailwind.config.js`
 
-Create `.env` from `.env.template` and fill in values:
-
+### Chain Configuration
+Change the chain in your `.env` file:
 ```env
-VITE_SBC_API_KEY={{apiKey}}
-VITE_DYNAMIC_ENVIRONMENT_ID=your_dynamic_env_id
-# Optional
-VITE_CHAIN=baseSepolia # or "base"
-VITE_RPC_URL=
+VITE_CHAIN=base          # Base mainnet
+VITE_CHAIN=baseSepolia   # Base Sepolia testnet
 ```
 
+**Note:** Radius Testnet is not currently supported by the Dynamic wallet provider. Use the base `react` template for Radius Testnet support.
 
+## Building for Production
+
+```bash
+pnpm build
+# or
+npm run build
+```
+
+The built files will be in the `dist/` directory, ready for deployment to any static host (Vercel, Netlify, Cloudflare Pages, etc.).
+
+## Learn More
+
+- [SBC Documentation](https://docs.stablecoin.xyz)
+- [Dynamic Documentation](https://docs.dynamic.xyz/)
+- [SBC App Kit GitHub](https://github.com/stablecoinxyz/app-kit)
+- [React Documentation](https://react.dev)
+- [Vite Documentation](https://vitejs.dev)
+
+## Support
+
+If you encounter any issues:
+1. Check the [SBC Documentation](https://docs.stablecoin.xyz)
+2. Review the [Dynamic Documentation](https://docs.dynamic.xyz/)
+3. Open an issue on the [SBC App Kit repository](https://github.com/stablecoinxyz/app-kit/issues)
+
+## License
+
+MIT
