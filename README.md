@@ -33,7 +33,7 @@ Arguments:
 
 Options:
   -V, --version           output the version number
-  -t, --template <type>   Template to use: react, react-dynamic, or react-para
+  -t, --template <type>   Template to use: react, react-dynamic, react-para, or react-turnkey
   -c, --chain <chain>     Chain to use: baseSepolia, base, or radiusTestnet
   --api-key <apiKey>      Your SBC API key for immediate configuration
   --wallet <wallet>       Wallet integration (not yet implemented)
@@ -44,16 +44,18 @@ Examples:
   $ npx create-sbc-app my-app --template react --chain radiusTestnet
   $ npx create-sbc-app my-app --template react-dynamic --chain base
   $ npx create-sbc-app my-app --template react-para --api-key your-key
+  $ npx create-sbc-app my-app --template react-turnkey --chain base
 
 Available Templates:
   - react           React + Vite template with SBC integration
   - react-dynamic   React + Vite with Dynamic wallet integration
   - react-para      React + Vite with Para wallet integration
+  - react-turnkey   React + Vite + Express backend with Turnkey embedded wallets
 
 Available Chains:
   - baseSepolia     Base Sepolia testnet (default)
   - base            Base mainnet
-  - radiusTestnet   Radius testnet (react template only)
+  - radiusTestnet   Radius testnet (react template only - not supported by Dynamic, Para, or Turnkey)
 ```
 
 ## ✨ Features
@@ -141,6 +143,34 @@ npx create-sbc-app my-app --template react-para
 - All standard SBC features
 
 **Additional Requirements:** Para API Key from [Para](https://para.xyz/)
+
+### React + Turnkey Template
+
+**Best for:** Production applications requiring embedded wallets with biometric authentication and backend infrastructure
+
+```bash
+npx create-sbc-app my-app --template react-turnkey
+```
+
+**Supported Chains:** Base Sepolia, Base (Radius Testnet not supported)
+
+**Features:**
+- Turnkey embedded wallet integration with passkey authentication
+- Express backend server for secure Turnkey API operations
+- Two authentication methods: biometric passkeys (Face ID/Touch ID) or wallet connection (MetaMask/Coinbase)
+- Account history and multi-account management
+- Full-stack development with `dev:fullstack` script
+- ERC-4337 smart accounts with gasless transactions
+- All standard SBC features
+
+**Additional Requirements:**
+- Turnkey Organization ID and API Keys from [Turnkey Dashboard](https://app.turnkey.com)
+- Backend deployment for production use (Railway, Render, Vercel, etc.)
+
+**Architecture:**
+- Frontend: React + Vite (port 5173)
+- Backend: Express server (port 3001)
+- Runs both services concurrently with `npm run dev:fullstack`
 
 ## 📝 Configuration
 

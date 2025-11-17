@@ -15,7 +15,7 @@ program
   .description('Create a new SBC App Kit project with an opinionated template')
   .version('0.2.0')
   .argument('[project-directory]', 'Directory to create the new app in')
-  .option('-t, --template <template>', 'Template to use: react, react-dynamic, or react-para')
+  .option('-t, --template <template>', 'Template to use: react, react-dynamic, react-para, or react-turnkey')
   .option('-c, --chain <chain>', 'Chain to use: baseSepolia, base, or radiusTestnet')
   .option('--api-key <apiKey>', 'Your SBC API key for immediate configuration')
   .option('--wallet <wallet>', 'Wallet integration (not yet implemented)')
@@ -29,6 +29,7 @@ Available Templates:
   - react           React + Vite template with SBC integration
   - react-dynamic   React + Vite with Dynamic wallet integration
   - react-para      React + Vite with Para wallet integration
+  - react-turnkey   React + Vite + Express backend with Turnkey embedded wallets
 
 Available Chains:
   - baseSepolia     Base Sepolia testnet (default)
@@ -44,7 +45,8 @@ Available Chains:
     const templateChoices = [
       { title: 'React', value: 'react' },
       { title: 'React (Dynamic wallet)', value: 'react-dynamic' },
-      { title: 'React (Para wallet)', value: 'react-para' }
+      { title: 'React (Para wallet)', value: 'react-para' },
+      { title: 'React (Turnkey embedded wallet + Backend)', value: 'react-turnkey' }
     ];
 
     const chainChoices = [
@@ -69,7 +71,7 @@ Available Chains:
     }
 
     // Use provided option or prompt for template
-    let template = options.template && ['react', 'react-dynamic', 'react-para'].includes(options.template) ? options.template : '';
+    let template = options.template && ['react', 'react-dynamic', 'react-para', 'react-turnkey'].includes(options.template) ? options.template : '';
     if (!template) {
       const res = await prompts({
         type: 'select',
@@ -82,7 +84,7 @@ Available Chains:
         process.exit(1);
       }
       template = res.template; // The value is already what we want from the choices
-      if (!template || !['react', 'react-dynamic', 'react-para'].includes(template)) {
+      if (!template || !['react', 'react-dynamic', 'react-para', 'react-turnkey'].includes(template)) {
         console.log('Template selection is required.');
         process.exit(1);
       }
@@ -107,6 +109,13 @@ Available Chains:
         console.log('Chain selection is required.');
         process.exit(1);
       }
+    }
+
+    // Validate template + chain compatibility
+    if (['react-dynamic', 'react-para', 'react-turnkey'].includes(template) && chain === 'radiusTestnet') {
+      console.log(`\nError: The ${template} template does not support radiusTestnet.`);
+      console.log('Please use baseSepolia or base chain instead.\n');
+      process.exit(1);
     }
 
     // Use provided option or prompt for API key
