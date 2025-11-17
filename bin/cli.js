@@ -10,7 +10,7 @@ const program = new Command();
 program
     .name('create-sbc-app')
     .description('Create a new SBC App Kit project with an opinionated template')
-    .version('0.2.0')
+    .version('0.4.0')
     .argument('[project-directory]', 'Directory to create the new app in')
     .option('-t, --template <template>', 'Template to use: react, react-dynamic, react-para, or react-turnkey')
     .option('-c, --chain <chain>', 'Chain to use: baseSepolia, base, or radiusTestnet')
