@@ -37,16 +37,10 @@ export function buildPermitTypedData(params: {
     domain: {
       name: tokenName,
       version: '1',
-      chainId: BigInt(chainId),
+      chainId: chainId,
       verifyingContract: tokenAddress,
     },
     types: {
-      EIP712Domain: [
-        { name: 'name', type: 'string' },
-        { name: 'version', type: 'string' },
-        { name: 'chainId', type: 'uint256' },
-        { name: 'verifyingContract', type: 'address' },
-      ],
       Permit: [
         { name: 'owner', type: 'address' },
         { name: 'spender', type: 'address' },
@@ -56,7 +50,7 @@ export function buildPermitTypedData(params: {
       ],
     },
     primaryType: 'Permit',
-    message: { owner, spender, value, nonce, deadline },
+    message: { owner, spender, value: value.toString(), nonce: nonce.toString(), deadline: deadline.toString() },
   } as const;
 }
 
