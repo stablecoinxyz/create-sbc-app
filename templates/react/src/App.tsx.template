@@ -606,7 +606,7 @@ async function getPermitSignature({
     };
     
     const signature = await walletClient.signTypedData({
-      account: ownerChecksum,
+      account: walletClient.account!,
       domain,
       types,
       primaryType: 'Permit',
