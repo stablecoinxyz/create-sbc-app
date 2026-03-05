@@ -2,7 +2,7 @@ import { DynamicContextProvider, useDynamicContext, DynamicUserProfile, DynamicW
 import { EthereumWalletConnectors } from '@dynamic-labs/ethereum';
 import { ZeroDevSmartWalletConnectors } from '@dynamic-labs/ethereum-aa';
 import { useSbcDynamic } from '@stablecoin.xyz/react';
-import { radiusTestnet, TestSBC_CONTRACT_ADDRESS } from '@stablecoin.xyz/core';
+import { radiusTestnet, radius, SBC_CONTRACT_ADDRESS_RADIUS } from '@stablecoin.xyz/core';
 import { baseSepolia, base, type Chain } from 'viem/chains';
 import { createPublicClient, http, getAddress, parseUnits, encodeFunctionData, erc20Abi } from 'viem';
 import { useEffect, useState } from 'react';
@@ -12,38 +12,34 @@ const getChain = () => {
   const chainEnv = import.meta.env.VITE_CHAIN;
   if (chainEnv === 'base') return base;
   if (chainEnv === 'radiusTestnet') return radiusTestnet;
+  if (chainEnv === 'radius') return radius;
   return baseSepolia;
 };
 
 const chain = getChain();
 const rpcUrl = import.meta.env.VITE_RPC_URL;
 
-// Radius testnet uses TestSBC (a test token for development)
-const TEST_SBC_DECIMALS = 6;
-
 const SBC_TOKEN_ADDRESS = (chain: Chain) => {
   if (chain.id === baseSepolia.id) return '0xf9FB20B8E097904f0aB7d12e9DbeE88f2dcd0F16';
   if (chain.id === base.id) return '0xfdcC3dd6671eaB0709A4C0f3F53De9a333d80798';
-  if (chain.id === radiusTestnet.id) return TestSBC_CONTRACT_ADDRESS;
+  if (chain.id === radiusTestnet.id || chain.id === radius.id) return SBC_CONTRACT_ADDRESS_RADIUS;
   throw new Error('Unsupported chain');
 };
 
 const SBC_DECIMALS = (chain: Chain) => {
   if (chain.id === baseSepolia.id) return 6;
   if (chain.id === base.id) return 18;
-  if (chain.id === radiusTestnet.id) return TEST_SBC_DECIMALS;
+  if (chain.id === radiusTestnet.id || chain.id === radius.id) return 6;
   throw new Error('Unsupported chain');
 };
 
-const getTokenSymbol = (chain: Chain) => {
-  if (chain.id === radiusTestnet.id) return 'TestSBC';
-  return 'SBC';
-};
+const getTokenSymbol = () => 'SBC';
 
 const chainExplorer = (chain: Chain) => {
   if (chain.id === baseSepolia.id) return 'https://sepolia.basescan.org';
   if (chain.id === base.id) return 'https://basescan.org';
   if (chain.id === radiusTestnet.id) return 'https://testnet.radiustech.xyz/testnet/explorer';
+  if (chain.id === radius.id) return 'https://network.radiustech.xyz';
   return '';
 };
 

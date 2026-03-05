@@ -13,13 +13,13 @@ program
     .version('0.4.0')
     .argument('[project-directory]', 'Directory to create the new app in')
     .option('-t, --template <template>', 'Template to use: react, react-dynamic, react-para, or react-turnkey')
-    .option('-c, --chain <chain>', 'Chain to use: baseSepolia, base, or radiusTestnet')
+    .option('-c, --chain <chain>', 'Chain to use: baseSepolia, base, radiusTestnet, or radius')
     .option('--api-key <apiKey>', 'Your SBC API key for immediate configuration')
     .option('--wallet <wallet>', 'Wallet integration (not yet implemented)')
     .addHelpText('after', `
 Examples:
   $ create-sbc-app my-app
-  $ create-sbc-app my-app --template react --chain radiusTestnet
+  $ create-sbc-app my-app --template react --chain radius
   $ create-sbc-app my-app --template react --api-key your-api-key
 
 Available Templates:
@@ -32,6 +32,7 @@ Available Chains:
   - baseSepolia     Base Sepolia testnet (default)
   - base            Base mainnet
   - radiusTestnet   Radius testnet
+  - radius          Radius mainnet
 `)
     .action(async (dir, options) => {
     if (options.wallet) {
@@ -47,7 +48,8 @@ Available Chains:
     const chainChoices = [
         { title: 'Base Sepolia (testnet)', value: 'baseSepolia' },
         { title: 'Base (mainnet)', value: 'base' },
-        { title: 'Radius Testnet', value: 'radiusTestnet' }
+        { title: 'Radius Testnet', value: 'radiusTestnet' },
+        { title: 'Radius (mainnet)', value: 'radius' }
     ];
     // Use provided argument or prompt for project directory
     let projectDir = dir && dir.trim() ? dir.trim() : '';
@@ -83,7 +85,7 @@ Available Chains:
         }
     }
     // Use provided option or prompt for chain
-    let chain = options.chain && ['baseSepolia', 'base', 'radiusTestnet'].includes(options.chain) ? options.chain : '';
+    let chain = options.chain && ['baseSepolia', 'base', 'radiusTestnet', 'radius'].includes(options.chain) ? options.chain : '';
     if (!chain) {
         const res = await prompts({
             type: 'select',
@@ -97,14 +99,14 @@ Available Chains:
             process.exit(1);
         }
         chain = res.chain;
-        if (!chain || !['baseSepolia', 'base', 'radiusTestnet'].includes(chain)) {
+        if (!chain || !['baseSepolia', 'base', 'radiusTestnet', 'radius'].includes(chain)) {
             console.log('Chain selection is required.');
             process.exit(1);
         }
     }
     // Validate template + chain compatibility
-    if (['react-dynamic', 'react-para', 'react-turnkey'].includes(template) && chain === 'radiusTestnet') {
-        console.log(`\nError: The ${template} template does not support radiusTestnet.`);
+    if (['react-dynamic', 'react-para', 'react-turnkey'].includes(template) && (chain === 'radiusTestnet' || chain === 'radius')) {
+        console.log(`\nError: The ${template} template does not support ${chain}.`);
         console.log('Please use baseSepolia or base chain instead.\n');
         process.exit(1);
     }

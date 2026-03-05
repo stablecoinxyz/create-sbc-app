@@ -34,14 +34,14 @@ Arguments:
 Options:
   -V, --version           output the version number
   -t, --template <type>   Template to use: react, react-dynamic, react-para, or react-turnkey
-  -c, --chain <chain>     Chain to use: baseSepolia, base, or radiusTestnet
+  -c, --chain <chain>     Chain to use: baseSepolia, base, radiusTestnet, or radius
   --api-key <apiKey>      Your SBC API key for immediate configuration
   --wallet <wallet>       Wallet integration (not yet implemented)
   -h, --help             display help for command
 
 Examples:
   $ npx create-sbc-app my-app
-  $ npx create-sbc-app my-app --template react --chain radiusTestnet
+  $ npx create-sbc-app my-app --template react --chain radius
   $ npx create-sbc-app my-app --template react-dynamic --chain base
   $ npx create-sbc-app my-app --template react-para --api-key your-key
   $ npx create-sbc-app my-app --template react-turnkey --chain base
@@ -56,6 +56,7 @@ Available Chains:
   - baseSepolia     Base Sepolia testnet (default)
   - base            Base mainnet
   - radiusTestnet   Radius testnet (react template only - not supported by Dynamic, Para, or Turnkey)
+  - radius          Radius mainnet (react template only - not supported by Dynamic, Para, or Turnkey)
 ```
 
 ## ✨ Features
@@ -98,7 +99,7 @@ The React template includes comprehensive, production-ready examples:
 npx create-sbc-app my-app
 ```
 
-**Supported Chains:** Base Sepolia, Base, Radius Testnet
+**Supported Chains:** Base Sepolia, Base, Radius Testnet, Radius Mainnet
 
 **Features:**
 - Fast development setup
@@ -184,7 +185,7 @@ The template includes comprehensive environment configuration:
 # Your SBC API key (get from SBC dashboard)
 VITE_SBC_API_KEY=your_api_key_here
 
-# Supported chains: "baseSepolia" | "base" | "radiusTestnet"
+# Supported chains: "baseSepolia" | "base" | "radiusTestnet" | "radius"
 VITE_CHAIN="baseSepolia"
 ```
 
@@ -215,7 +216,7 @@ cp .env.template .env
 
 # then ensure your .env has the environment variables set up
 
-# Supported chains: "baseSepolia" | "base" | "radiusTestnet"
+# Supported chains: "baseSepolia" | "base" | "radiusTestnet" | "radius"
 VITE_CHAIN="baseSepolia"
 # Custom RPC URL (optional) - e.g. get one from Alchemy at https://dashboard.alchemy.com/apps
 VITE_RPC_URL=
